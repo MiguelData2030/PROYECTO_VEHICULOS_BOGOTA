@@ -6,7 +6,7 @@ Responsibilities:
 - Deduplicate results by URL
 - Persist new listings to the DB as Oportunidad records
 - Calculate opportunity score for each listing
-- Pull market reference prices from the precio_mercado table (Vehiculo)
+- Estimate market prices from comparable listings already collected (oportunidades)
 - Log all major steps
 """
 
@@ -21,7 +21,7 @@ from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..models.database import AsyncSessionLocal
-from ..models.vehiculo import Vehiculo
+from ..models.oportunidad import Oportunidad as OportunidadDB
 from .carroya_scraper import CarroyaScraper
 from .tucarro_scraper import TuCarroScraper
 
@@ -56,8 +56,8 @@ CURRENT_YEAR = 2026
 class Oportunidad:
     """
     Represents a scraped listing enriched with opportunity score.
-    Persisted in the `vehiculos` table with estado='disponible' and
-    fuente set to the platform.
+    Persisted in the `oportunidades` table (never in `vehiculos`, which is
+    our own inventory and feeds the public catalogue).
     """
 
     def __init__(self, listing: dict, score: float, market_price: Optional[int]) -> None:
@@ -286,8 +286,8 @@ class ScraperManager:
         año: Optional[int],
     ) -> Optional[int]:
         """
-        Return the median market price (precio_mercado) from the vehiculos
-        table for the given marca/modelo/año combination.
+        Return the average asking price of comparable listings already
+        collected in the oportunidades table for marca/modelo/año.
 
         Falls back to brand+year average, then brand average.
         """
@@ -297,11 +297,11 @@ class ScraperManager:
         # Exact match: marca + modelo + año
         if marca and modelo and año:
             result = await session.execute(
-                select(func.avg(Vehiculo.precio_mercado)).where(
-                    Vehiculo.marca.ilike(marca),
-                    Vehiculo.modelo.ilike(modelo),
-                    Vehiculo.año == int(año),
-                    Vehiculo.precio_mercado.isnot(None),
+                select(func.avg(OportunidadDB.precio_publicado)).where(
+                    OportunidadDB.marca.ilike(marca),
+                    OportunidadDB.modelo.ilike(modelo),
+                    OportunidadDB.año == int(año),
+                    OportunidadDB.precio_publicado.isnot(None),
                 )
             )
             avg = result.scalar()
@@ -315,10 +315,10 @@ class ScraperManager:
         # Fallback: marca + año ± 1 year
         if marca and año:
             result = await session.execute(
-                select(func.avg(Vehiculo.precio_mercado)).where(
-                    Vehiculo.marca.ilike(marca),
-                    Vehiculo.año.between(int(año) - 1, int(año) + 1),
-                    Vehiculo.precio_mercado.isnot(None),
+                select(func.avg(OportunidadDB.precio_publicado)).where(
+                    OportunidadDB.marca.ilike(marca),
+                    OportunidadDB.año.between(int(año) - 1, int(año) + 1),
+                    OportunidadDB.precio_publicado.isnot(None),
                 )
             )
             avg = result.scalar()
@@ -332,9 +332,9 @@ class ScraperManager:
         # Last resort: brand average
         if marca:
             result = await session.execute(
-                select(func.avg(Vehiculo.precio_mercado)).where(
-                    Vehiculo.marca.ilike(marca),
-                    Vehiculo.precio_mercado.isnot(None),
+                select(func.avg(OportunidadDB.precio_publicado)).where(
+                    OportunidadDB.marca.ilike(marca),
+                    OportunidadDB.precio_publicado.isnot(None),
                 )
             )
             avg = result.scalar()
@@ -359,58 +359,58 @@ class ScraperManager:
         market_price: Optional[int],
     ) -> None:
         """
-        Upsert a listing into the vehiculos table.
+        Upsert a scraped listing into the oportunidades table (keyed by URL).
 
-        If a vehicle with the same url_fuente already exists it is updated;
-        otherwise a new record is inserted.
+        Existing rows get fresh price/score data but keep their workflow
+        state (estado, notas) so the team's follow-up is not lost.
         """
         url = listing.get("url")
-
-        # Check for existing record
-        existing = None
-        if url:
-            result = await session.execute(
-                select(Vehiculo).where(Vehiculo.url_fuente == url)
-            )
-            existing = result.scalar_one_or_none()
-
         precio = listing.get("precio")
         año = listing.get("año")
+        marca = listing.get("marca")
+        if not (url and precio and año and marca):
+            return  # not enough data to be actionable
+
         kilometraje = listing.get("kilometraje")
+        descuento = None
+        if market_price and market_price > 0:
+            descuento = round((market_price - float(precio)) / market_price * 100, 2)
+
+        result = await session.execute(select(OportunidadDB).where(OportunidadDB.url == url))
+        existing = result.scalar_one_or_none()
 
         if existing:
-            # Update mutable fields
-            existing.precio_mercado = float(precio) if precio else existing.precio_mercado
-            existing.score_oportunidad = score
-            existing.updated_at = datetime.now(tz=timezone.utc)
-            self.logger.debug("Updated existing vehiculo id=%d url=%s", existing.id, url)
-        else:
-            vehiculo = Vehiculo(
-                marca=listing.get("marca") or "Desconocido",
+            existing.precio_publicado = float(precio)
+            existing.precio_mercado_estimado = float(market_price) if market_price else existing.precio_mercado_estimado
+            existing.descuento_porcentaje = descuento
+            existing.score = score
+            self.logger.debug("Updated oportunidad id=%d url=%s", existing.id, url)
+            return
+
+        # Every listing is stored, even low-scoring ones: together they are the
+        # market sample used by _get_market_price. The UI filters by score.
+        session.add(
+            OportunidadDB(
+                url=url,
+                plataforma=listing.get("plataforma") or "desconocida",
+                marca=marca,
                 modelo=listing.get("modelo") or "Desconocido",
-                año=int(año) if año else 2000,
-                precio_compra=None,
-                precio_venta=None,
-                precio_mercado=float(precio) if precio else None,
-                kilometraje=int(kilometraje) if kilometraje else 0,
-                transmision=listing.get("transmision") or "mecanica",
-                combustible=listing.get("combustible") or "gasolina",
-                color=listing.get("color") or "desconocido",
-                tipo_vehiculo=listing.get("tipo_vehiculo") or "Sedan",
-                ciudad=listing.get("ubicacion") or "Bogotá",
-                estado="disponible",
-                descripcion=listing.get("descripcion"),
-                fotos=listing.get("fotos"),
-                fuente=listing.get("plataforma"),
-                url_fuente=url,
-                score_oportunidad=score,
-                fecha_publicacion=datetime.now(tz=timezone.utc),
+                año=int(año),
+                kilometraje=int(kilometraje) if kilometraje else None,
+                ubicacion=listing.get("ubicacion"),
+                precio_publicado=float(precio),
+                precio_mercado_estimado=float(market_price) if market_price else None,
+                descuento_porcentaje=descuento,
+                score=score,
+                descripcion_corta=(listing.get("descripcion") or listing.get("titulo") or "")[:500] or None,
+                estado="nueva",
+                detectada_en=datetime.now(tz=timezone.utc),
             )
-            session.add(vehiculo)
-            self.logger.debug(
-                "Inserted new vehiculo: %s %s %s score=%.1f",
-                listing.get("marca"), listing.get("modelo"), año, score,
-            )
+        )
+        self.logger.debug(
+            "Inserted oportunidad: %s %s %s score=%.1f",
+            marca, listing.get("modelo"), año, score,
+        )
 
     # ------------------------------------------------------------------
     # Summary helper

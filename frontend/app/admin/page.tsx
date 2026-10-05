@@ -2,13 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import {
   BarChart3, Car, DollarSign, TrendingUp, Package, Clock,
   Target, Zap, RefreshCw, Loader2, AlertCircle, ChevronRight,
-  Users, ShoppingCart, ArrowUpRight, ArrowDownRight, LogOut,
 } from 'lucide-react';
-import { useAuth } from '@/lib/auth';
+import AdminShell from '@/components/AdminShell';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, PieChart, Pie, Cell,
@@ -23,21 +21,11 @@ import toast from 'react-hot-toast';
 const COLORS = ['#d4a843', '#e8c567', '#b08930', '#8a6d24', '#f0d78c', '#6b5320'];
 
 export default function AdminDashboard() {
-  const { user, loading: authLoading, logout } = useAuth();
-  const router = useRouter();
-
   const [stats, setStats] = useState<Estadisticas | null>(null);
   const [inventario, setInventario] = useState<VehiculoAdmin[]>([]);
   const [oportunidades, setOportunidades] = useState<Oportunidad[]>([]);
   const [loading, setLoading] = useState(true);
   const [scraping, setScraping] = useState(false);
-
-  // Redirect to login if not authenticated
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/login');
-    }
-  }, [authLoading, user, router]);
 
   const loadData = async () => {
     setLoading(true);
@@ -70,19 +58,29 @@ export default function AdminDashboard() {
     setScraping(false);
   };
 
-  if (authLoading || (!user && !authLoading)) {
-    return (
-      <div className="pt-16 flex items-center justify-center min-h-[80vh]">
-        <Loader2 className="w-10 h-10 text-primary animate-spin" />
-      </div>
-    );
-  }
+  const headerActions = (
+    <>
+      <button
+        onClick={handleScraping}
+        disabled={scraping}
+        className="btn-secondary flex items-center gap-2 text-sm"
+      >
+        {scraping ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+        {scraping ? 'Escaneando...' : 'Ejecutar Scraping'}
+      </button>
+      <button onClick={loadData} className="btn-ghost p-2" title="Refrescar">
+        <RefreshCw className="w-4 h-4" />
+      </button>
+    </>
+  );
 
   if (loading) {
     return (
-      <div className="pt-16 flex items-center justify-center min-h-[80vh]">
-        <Loader2 className="w-10 h-10 text-primary animate-spin" />
-      </div>
+      <AdminShell title="Dashboard" subtitle="Panel de administración AutoNegocio" actions={headerActions}>
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <Loader2 className="w-10 h-10 text-primary animate-spin" />
+        </div>
+      </AdminShell>
     );
   }
 
@@ -109,37 +107,7 @@ export default function AdminDashboard() {
     .slice(0, 8);
 
   return (
-    <div className="pt-16">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-2xl font-display font-bold text-white">Dashboard</h1>
-            <p className="text-gray-400 text-sm">Panel de administración AutoNegocio</p>
-          </div>
-          <div className="flex gap-3 items-center">
-            <span className="text-gray-500 text-sm hidden sm:block">Hola, {user?.username}</span>
-            <button
-              onClick={handleScraping}
-              disabled={scraping}
-              className="btn-secondary flex items-center gap-2 text-sm"
-            >
-              {scraping ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
-              {scraping ? 'Escaneando...' : 'Ejecutar Scraping'}
-            </button>
-            <button onClick={loadData} className="btn-ghost p-2" title="Refrescar">
-              <RefreshCw className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => { logout(); router.push('/'); }}
-              className="btn-ghost p-2 text-gray-500 hover:text-red-400"
-              title="Cerrar sesión"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-
+    <AdminShell title="Dashboard" subtitle="Panel de administración AutoNegocio" actions={headerActions}>
         {/* KPI Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <KPICard
@@ -258,6 +226,9 @@ export default function AdminDashboard() {
               <Car className="w-4 h-4 text-primary" />
               Inventario Disponible (Top por Score)
             </h3>
+            <Link href="/admin/inventario" className="text-primary text-sm flex items-center gap-1 hover:underline">
+              Gestionar inventario <ChevronRight className="w-4 h-4" />
+            </Link>
           </div>
           {topInventario.length > 0 ? (
             <div className="overflow-x-auto">
@@ -330,19 +301,22 @@ export default function AdminDashboard() {
               <Target className="w-4 h-4 text-primary" />
               Top Oportunidades de Compra
             </h3>
+            <Link href="/admin/oportunidades" className="text-primary text-sm flex items-center gap-1 mb-4 hover:underline">
+              Ver todas <ChevronRight className="w-4 h-4" />
+            </Link>
             <div className="space-y-3">
               {oportunidades.slice(0, 5).map((op) => (
                 <div key={op.id} className="flex items-center justify-between p-3 bg-dark rounded-xl">
                   <div>
-                    <p className="text-white font-medium">{op.titulo || `${op.marca} ${op.modelo}`}</p>
-                    <p className="text-gray-500 text-xs">{op.fuente} · {op.ciudad}</p>
+                    <p className="text-white font-medium">{op.marca} {op.modelo} {op.año}</p>
+                    <p className="text-gray-500 text-xs capitalize">{op.plataforma} · {op.ubicacion ?? '-'}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-primary font-medium">{formatCOP(op.precio)}</p>
+                    <p className="text-primary font-medium">{formatCOP(op.precio_publicado)}</p>
                     <span className={`text-xs font-medium ${
-                      op.score >= 75 ? 'text-green-400' : 'text-yellow-400'
+                      (op.score ?? 0) >= 75 ? 'text-green-400' : 'text-yellow-400'
                     }`}>
-                      Score: {op.score}
+                      Score: {op.score?.toFixed(0) ?? '-'}
                     </span>
                   </div>
                 </div>
@@ -350,8 +324,7 @@ export default function AdminDashboard() {
             </div>
           </div>
         )}
-      </div>
-    </div>
+    </AdminShell>
   );
 }
 

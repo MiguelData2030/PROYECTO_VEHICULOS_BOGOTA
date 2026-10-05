@@ -23,12 +23,14 @@ from typing import Optional
 
 import os
 import shutil
+import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, status
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import func, select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend.api.auth import require_admin
 from backend.models.database import get_db
 from backend.models import Vehiculo
 
@@ -224,6 +226,7 @@ def _vehiculo_to_out(v: Vehiculo) -> dict:
     "/estadisticas",
     response_model=VehiculoEstadisticas,
     summary="Estadísticas del inventario",
+    dependencies=[Depends(require_admin)],
 )
 async def estadisticas(db: AsyncSession = Depends(get_db)):
     """
@@ -325,7 +328,27 @@ async def catalogo(
     return result.scalars().all()
 
 
-@router.get("", response_model=list[VehiculoOut], summary="Listar vehículos (inventario interno)")
+@router.get(
+    "/catalogo/{vehiculo_id}",
+    response_model=VehiculoCatalogoOut,
+    summary="Detalle público de un vehículo (sin precios de compra)",
+)
+async def catalogo_detalle(vehiculo_id: int, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(
+        select(Vehiculo).where(Vehiculo.id == vehiculo_id, Vehiculo.estado != "vendido")
+    )
+    v = result.scalar_one_or_none()
+    if not v:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vehículo no encontrado")
+    return v
+
+
+@router.get(
+    "",
+    response_model=list[VehiculoOut],
+    summary="Listar vehículos (inventario interno)",
+    dependencies=[Depends(require_admin)],
+)
 async def listar_vehiculos(
     marca: Optional[str] = Query(None),
     anio: Optional[int] = Query(None),
@@ -370,7 +393,12 @@ async def listar_vehiculos(
     return [_vehiculo_to_out(v) for v in result.scalars().all()]
 
 
-@router.get("/{vehiculo_id}", response_model=VehiculoOut, summary="Obtener vehículo por ID")
+@router.get(
+    "/{vehiculo_id}",
+    response_model=VehiculoOut,
+    summary="Obtener vehículo por ID",
+    dependencies=[Depends(require_admin)],
+)
 async def obtener_vehiculo(vehiculo_id: int, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Vehiculo).where(Vehiculo.id == vehiculo_id))
     v = result.scalar_one_or_none()
@@ -384,6 +412,7 @@ async def obtener_vehiculo(vehiculo_id: int, db: AsyncSession = Depends(get_db))
     response_model=VehiculoOut,
     status_code=status.HTTP_201_CREATED,
     summary="Crear vehículo",
+    dependencies=[Depends(require_admin)],
 )
 async def crear_vehiculo(payload: VehiculoCreate, db: AsyncSession = Depends(get_db)):
     # Check for duplicate placa if provided
@@ -401,7 +430,12 @@ async def crear_vehiculo(payload: VehiculoCreate, db: AsyncSession = Depends(get
     return _vehiculo_to_out(v)
 
 
-@router.put("/{vehiculo_id}", response_model=VehiculoOut, summary="Actualizar vehículo")
+@router.put(
+    "/{vehiculo_id}",
+    response_model=VehiculoOut,
+    summary="Actualizar vehículo",
+    dependencies=[Depends(require_admin)],
+)
 async def actualizar_vehiculo(
     vehiculo_id: int,
     payload: VehiculoUpdate,
@@ -435,6 +469,7 @@ async def actualizar_vehiculo(
     "/{vehiculo_id}/fotos",
     response_model=VehiculoOut,
     summary="Subir fotos de un vehículo",
+    dependencies=[Depends(require_admin)],
 )
 async def subir_fotos(
     vehiculo_id: int,
@@ -479,10 +514,14 @@ async def subir_fotos(
 
     new_urls: list[str] = []
     for f in files:
-        file_path = os.path.join(upload_dir, f.filename)
+        # Never trust the client filename: generate our own to avoid path
+        # traversal and accidental overwrites.
+        ext = f.filename.rsplit(".", 1)[-1].lower()
+        safe_name = f"{uuid.uuid4().hex}.{ext}"
+        file_path = os.path.join(upload_dir, safe_name)
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(f.file, buffer)
-        url_path = f"/uploads/vehiculos/{vehiculo_id}/{f.filename}"
+        url_path = f"/uploads/vehiculos/{vehiculo_id}/{safe_name}"
         new_urls.append(url_path)
 
     # Update vehicle's fotos field
@@ -493,9 +532,44 @@ async def subir_fotos(
 
 
 @router.delete(
+    "/{vehiculo_id}/fotos",
+    response_model=VehiculoOut,
+    summary="Eliminar una foto de un vehículo",
+    dependencies=[Depends(require_admin)],
+)
+async def eliminar_foto(
+    vehiculo_id: int,
+    url: str = Query(..., description="URL de la foto tal como aparece en `fotos`"),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(select(Vehiculo).where(Vehiculo.id == vehiculo_id))
+    v = result.scalar_one_or_none()
+    if not v:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vehículo no encontrado")
+
+    fotos: list[str] = list(v.fotos or [])
+    if url not in fotos:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Foto no encontrada")
+
+    # Only delete files we own (inside this vehicle's upload folder)
+    prefix = f"/uploads/vehiculos/{vehiculo_id}/"
+    if url.startswith(prefix):
+        file_path = os.path.join("uploads", "vehiculos", str(vehiculo_id), os.path.basename(url))
+        if os.path.isfile(file_path):
+            os.remove(file_path)
+
+    fotos.remove(url)
+    v.fotos = fotos
+    await db.flush()
+    await db.refresh(v)
+    return _vehiculo_to_out(v)
+
+
+@router.delete(
     "/{vehiculo_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Eliminar vehículo",
+    dependencies=[Depends(require_admin)],
 )
 async def eliminar_vehiculo(vehiculo_id: int, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Vehiculo).where(Vehiculo.id == vehiculo_id))

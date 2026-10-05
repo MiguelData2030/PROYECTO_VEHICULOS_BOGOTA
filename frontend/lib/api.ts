@@ -58,6 +58,7 @@ export function catalogoToVehicle(v: VehiculoCatalogo): Vehicle {
     ubicacion: v.ciudad,
     estado: mapEstado(v.estado),
     imagen: v.fotos && v.fotos.length > 0 ? v.fotos[0] : '/placeholder-car.jpg',
+    fotos: v.fotos ?? [],
     descripcion: v.descripcion ?? '',
     soat: v.soat_vigente,
     tecnicomecanica: v.tecnicomecanica_vigente,
@@ -117,14 +118,9 @@ export async function fetchCatalogo(filters: CatalogoFilters = {}): Promise<Vehi
 
 export async function fetchVehiculo(id: number): Promise<Vehicle | null> {
   try {
-    const { data } = await api.get<VehiculoCatalogo>(`/vehiculos/${id}`);
+    const { data } = await api.get<VehiculoCatalogo>(`/vehiculos/catalogo/${id}`);
     return catalogoToVehicle(data);
   } catch {
     return null;
   }
-}
-
-export async function fetchEstadisticas() {
-  const { data } = await api.get('/vehiculos/estadisticas');
-  return data;
 }

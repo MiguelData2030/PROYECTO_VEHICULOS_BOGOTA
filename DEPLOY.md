@@ -10,9 +10,17 @@
 
 ```
 DATABASE_URL=postgresql+asyncpg://user:pass@host/autonegocio
-SECRET_KEY=tu-clave-secreta-segura-cambiar-en-produccion
+SECRET_KEY=<generar con: python -c "import secrets; print(secrets.token_urlsafe(48))">
+CORS_ORIGINS=https://tu-frontend.vercel.app,https://www.autonegocio.co
+DEBUG=false
 ANTHROPIC_API_KEY=sk-ant-... (opcional, para agentes IA)
 ```
+
+> ⚠️ `SECRET_KEY` y `CORS_ORIGINS` son obligatorios en producción: el valor por
+> defecto de `SECRET_KEY` está en el repositorio y permitiría falsificar sesiones.
+
+> ⚠️ Las fotos se guardan en `uploads/` dentro del contenedor. En Railway, monta un
+> **Volume** en `/app/uploads` o se perderán en cada deploy.
 
 6. Railway auto-deploya en cada push
 
@@ -32,11 +40,22 @@ NEXT_PUBLIC_API_URL=https://tu-backend.railway.app
 
 ## Post-Deploy
 
-Crear usuario admin:
+Crear usuario admin (elige una opción):
+
+- **Desde la web**: entra a `/login` → pestaña *Registrarse*. Solo la **primera**
+  cuenta se puede crear así; después, el registro exige estar logueado como admin.
+- **Por script** (en el shell de Railway o local apuntando a la DB de producción):
+
 ```bash
-# En Railway, abrir shell o ejecutar localmente apuntando a la DB de producción
-python -m scripts.create_admin
+ADMIN_USERNAME=miguel ADMIN_PASSWORD='una-clave-larga' python -m scripts.create_admin
 ```
+
+## Seguridad de la API
+
+Público (sin login): `GET /vehiculos/catalogo`, `GET /vehiculos/catalogo/{id}`,
+`POST /clientes` (formulario *Vender*), `POST /auth/login`.
+Todo lo demás (inventario, precios de compra, clientes, transacciones,
+oportunidades, mercado, agentes IA, scraping) requiere token de administrador.
 
 ## Dominios Personalizados
 

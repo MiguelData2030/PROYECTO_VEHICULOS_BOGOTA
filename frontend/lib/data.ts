@@ -13,6 +13,7 @@ export interface Vehicle {
   ubicacion: string;
   estado: 'Disponible' | 'Reservado' | 'Vendido';
   imagen: string;
+  fotos?: string[];
   descripcion: string;
   soat: boolean;
   tecnicomecanica: boolean;

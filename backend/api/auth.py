@@ -13,7 +13,7 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from pydantic import BaseModel, EmailStr, Field
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.config.settings import settings
@@ -28,6 +28,7 @@ router = APIRouter()
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+oauth2_scheme_optional = OAuth2PasswordBearer(tokenUrl="/auth/login", auto_error=False)
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -59,8 +60,7 @@ class TokenOut(BaseModel):
 class UserRegisterIn(BaseModel):
     username: str = Field(..., min_length=3, max_length=100)
     email: str = Field(..., max_length=255)
-    password: str = Field(..., min_length=6)
-    is_admin: bool = False
+    password: str = Field(..., min_length=8)
 
 
 class UserOut(BaseModel):
@@ -77,11 +77,7 @@ class UserOut(BaseModel):
 # Dependencies
 # ---------------------------------------------------------------------------
 
-async def get_current_user(
-    token: str = Depends(oauth2_scheme),
-    db: AsyncSession = Depends(get_db),
-) -> Usuario:
-    """Validate JWT and return the corresponding Usuario."""
+async def _user_from_token(token: str, db: AsyncSession) -> Usuario:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="No se pudo validar las credenciales",
@@ -100,6 +96,24 @@ async def get_current_user(
     if user is None:
         raise credentials_exception
     return user
+
+
+async def get_current_user(
+    token: str = Depends(oauth2_scheme),
+    db: AsyncSession = Depends(get_db),
+) -> Usuario:
+    """Validate JWT and return the corresponding Usuario."""
+    return await _user_from_token(token, db)
+
+
+async def require_admin(current_user: Usuario = Depends(get_current_user)) -> Usuario:
+    """Only admin users may access internal/back-office endpoints."""
+    if not current_user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Se requieren permisos de administrador",
+        )
+    return current_user
 
 
 # ---------------------------------------------------------------------------
@@ -132,8 +146,32 @@ async def login(
     status_code=status.HTTP_201_CREATED,
     summary="Registrar usuario administrador",
 )
-async def register(payload: UserRegisterIn, db: AsyncSession = Depends(get_db)):
-    """Create a new admin user."""
+async def register(
+    payload: UserRegisterIn,
+    token: Optional[str] = Depends(oauth2_scheme_optional),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Create a new admin user.
+
+    The very first account can be created without authentication (bootstrap).
+    After that, only an authenticated admin can register new users.
+    """
+    user_count = (await db.execute(select(func.count(Usuario.id)))).scalar_one()
+    if user_count > 0:
+        if not token:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Solo un administrador puede registrar nuevos usuarios",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        current = await _user_from_token(token, db)
+        if not current.is_admin:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Se requieren permisos de administrador",
+            )
+
     # Check for duplicate username
     result = await db.execute(select(Usuario).where(Usuario.username == payload.username))
     if result.scalar_one_or_none():
@@ -154,7 +192,7 @@ async def register(payload: UserRegisterIn, db: AsyncSession = Depends(get_db)):
         username=payload.username,
         email=payload.email,
         hashed_password=get_password_hash(payload.password),
-        is_admin=payload.is_admin,
+        is_admin=True,
     )
     db.add(user)
     await db.flush()

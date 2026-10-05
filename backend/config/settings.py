@@ -3,6 +3,9 @@ from typing import Optional
 import os
 
 
+DEFAULT_SECRET_KEY = "autonegocio-secret-key-change-in-production-2026"
+
+
 class Settings(BaseSettings):
     # App
     APP_NAME: str = "AutoNegocio API"
@@ -14,9 +17,13 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "sqlite+aiosqlite:///./autonegocio.db"
 
     # JWT Auth
-    SECRET_KEY: str = "autonegocio-secret-key-change-in-production-2026"
+    SECRET_KEY: str = DEFAULT_SECRET_KEY
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440  # 24 hours
+
+    # CORS — comma-separated list of allowed origins.
+    # In production set e.g. CORS_ORIGINS=https://www.autonegocio.co,https://autonegocio.vercel.app
+    CORS_ORIGINS: str = "*"
 
     # Scraping
     SCRAPING_INTERVAL_MINUTES: int = 30

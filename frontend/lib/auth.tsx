@@ -68,12 +68,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const register = async (username: string, email: string, password: string) => {
-    await axios.post(`${API_URL}/auth/register`, {
-      username,
-      email,
-      password,
-      is_admin: true,
-    });
+    await axios.post(
+      `${API_URL}/auth/register`,
+      { username, email, password },
+      token ? { headers: { Authorization: `Bearer ${token}` } } : undefined,
+    );
   };
 
   const logout = () => {

@@ -19,6 +19,7 @@ from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend.api.auth import require_admin
 from backend.models.database import get_db
 from backend.models import Cliente
 
@@ -90,7 +91,7 @@ class ClienteResumen(BaseModel):
 # Endpoints — /buscar must be declared before /{id}
 # ---------------------------------------------------------------------------
 
-@router.get("/buscar", response_model=list[ClienteResumen], summary="Buscar clientes")
+@router.get("/buscar", dependencies=[Depends(require_admin)], response_model=list[ClienteResumen], summary="Buscar clientes")
 async def buscar_clientes(
     q: str = Query(..., min_length=2, description="Busca por nombre, teléfono o email"),
     limit: int = Query(20, ge=1, le=100),
@@ -117,7 +118,7 @@ async def buscar_clientes(
     return result.scalars().all()
 
 
-@router.get("", response_model=list[ClienteResumen], summary="Listar clientes")
+@router.get("", dependencies=[Depends(require_admin)], response_model=list[ClienteOut], summary="Listar clientes (más recientes primero)")
 async def listar_clientes(
     tipo: Optional[str] = Query(None, description="comprador | vendedor | ambos"),
     skip: int = Query(0, ge=0),
@@ -136,13 +137,13 @@ async def listar_clientes(
     stmt = select(Cliente)
     if conditions:
         stmt = stmt.where(and_(*conditions))
-    stmt = stmt.offset(skip).limit(limit).order_by(Cliente.nombre)
+    stmt = stmt.order_by(Cliente.created_at.desc(), Cliente.id.desc()).offset(skip).limit(limit)
 
     result = await db.execute(stmt)
     return result.scalars().all()
 
 
-@router.get("/{cliente_id}", response_model=ClienteOut, summary="Obtener cliente por ID")
+@router.get("/{cliente_id}", dependencies=[Depends(require_admin)], response_model=ClienteOut, summary="Obtener cliente por ID")
 async def obtener_cliente(cliente_id: int, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Cliente).where(Cliente.id == cliente_id))
     c = result.scalar_one_or_none()
@@ -164,14 +165,24 @@ async def crear_cliente(payload: ClienteCreate, db: AsyncSession = Depends(get_d
             detail=f"tipo debe ser uno de: {TIPOS_CLIENTE}",
         )
 
-    # Unique phone check
+    # Same phone → returning lead (e.g. the public /vender form submitted again).
+    # Merge the new info into the existing record instead of rejecting it.
     if payload.telefono:
         dup = await db.execute(select(Cliente).where(Cliente.telefono == payload.telefono))
-        if dup.scalar_one_or_none():
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail=f"Ya existe un cliente con el teléfono {payload.telefono}",
-            )
+        existing = dup.scalar_one_or_none()
+        if existing:
+            if payload.notas:
+                stamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M")
+                existing.notas = ((existing.notas or "") + f"\n[{stamp}] {payload.notas}").strip()
+            if payload.vehiculos_interes:
+                existing.vehiculos_interes = list(existing.vehiculos_interes or []) + payload.vehiculos_interes
+            if payload.email and not existing.email:
+                existing.email = payload.email
+            if existing.tipo != payload.tipo and existing.tipo != "ambos":
+                existing.tipo = "ambos"
+            await db.flush()
+            await db.refresh(existing)
+            return existing
 
     # Unique cedula check
     if payload.cedula:
@@ -189,7 +200,7 @@ async def crear_cliente(payload: ClienteCreate, db: AsyncSession = Depends(get_d
     return c
 
 
-@router.put("/{cliente_id}", response_model=ClienteOut, summary="Actualizar cliente")
+@router.put("/{cliente_id}", dependencies=[Depends(require_admin)], response_model=ClienteOut, summary="Actualizar cliente")
 async def actualizar_cliente(
     cliente_id: int,
     payload: ClienteUpdate,
@@ -238,6 +249,7 @@ async def actualizar_cliente(
     "/{cliente_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Eliminar cliente",
+    dependencies=[Depends(require_admin)],
 )
 async def eliminar_cliente(cliente_id: int, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Cliente).where(Cliente.id == cliente_id))

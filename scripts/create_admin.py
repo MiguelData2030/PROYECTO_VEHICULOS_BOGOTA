@@ -1,8 +1,12 @@
 """
-Create a default admin user for development.
+Create the admin user.
 Run: python -m scripts.create_admin
+
+Credentials come from ADMIN_USERNAME / ADMIN_EMAIL / ADMIN_PASSWORD env vars.
+Without ADMIN_PASSWORD a random password is generated and printed once.
 """
 import asyncio
+import secrets
 import sys
 import os
 
@@ -15,9 +19,10 @@ from sqlalchemy import select
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-USERNAME = "admin"
-EMAIL = "admin@autonegocio.co"
-PASSWORD = "admin123"
+USERNAME = os.environ.get("ADMIN_USERNAME", "admin")
+EMAIL = os.environ.get("ADMIN_EMAIL", "admin@autonegocio.co")
+PASSWORD_FROM_ENV = bool(os.environ.get("ADMIN_PASSWORD"))
+PASSWORD = os.environ.get("ADMIN_PASSWORD") or secrets.token_urlsafe(12)
 
 
 async def create():
@@ -38,7 +43,10 @@ async def create():
         )
         session.add(user)
         await session.commit()
-        print(f"Admin user created: {USERNAME} / {PASSWORD}")
+        if PASSWORD_FROM_ENV:
+            print(f"Admin user created: {USERNAME} (password from ADMIN_PASSWORD)")
+        else:
+            print(f"Admin user created: {USERNAME} / {PASSWORD}  <- guárdala, no se volverá a mostrar")
 
     await engine.dispose()
 

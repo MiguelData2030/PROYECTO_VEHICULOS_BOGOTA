@@ -59,9 +59,11 @@ export default function VehiculoDetallePage() {
     );
   }
 
-  const photos = vehicle.imagen && vehicle.imagen !== '/placeholder-car.jpg'
-    ? [vehicle.imagen]
-    : [];
+  const photos = vehicle.fotos && vehicle.fotos.length > 0
+    ? vehicle.fotos
+    : vehicle.imagen && vehicle.imagen !== '/placeholder-car.jpg'
+      ? [vehicle.imagen]
+      : [];
 
   const whatsappMsg = encodeURIComponent(
     `Hola, estoy interesado en el ${vehicle.marca} ${vehicle.modelo} ${vehicle.anio} publicado en su web. ¿Está disponible?`

@@ -134,7 +134,7 @@ export default function LoginPage() {
                 value={form.password}
                 onChange={handleChange}
                 required
-                minLength={6}
+                minLength={mode === 'register' ? 8 : 1}
                 placeholder="••••••••"
                 className="input-field"
                 autoComplete={mode === 'login' ? 'current-password' : 'new-password'}

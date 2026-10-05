@@ -6,11 +6,11 @@ Car buying/selling business in Bogota, Colombia.
 import os
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, status
+from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from backend.config.settings import settings
+from backend.config.settings import DEFAULT_SECRET_KEY, settings
 from backend.models.database import engine, Base
 from backend.scheduler import start_scheduler, stop_scheduler
 
@@ -22,11 +22,17 @@ from backend.api.oportunidades import router as oportunidades_router
 from backend.api.mercado import router as mercado_router
 from backend.api.auth import router as auth_router
 from backend.api.agentes import router as agentes_router
+from backend.api.auth import require_admin
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Create DB tables on startup; clean up on shutdown."""
+    if not settings.DEBUG and settings.SECRET_KEY == DEFAULT_SECRET_KEY:
+        raise RuntimeError(
+            "SECRET_KEY no configurada: define la variable de entorno SECRET_KEY en producción."
+        )
+
     # Import all models so SQLAlchemy registers them before create_all
     import backend.models  # noqa: F401
 
@@ -60,12 +66,13 @@ app = FastAPI(
 )
 
 # ---------------------------------------------------------------------------
-# CORS — allow all origins for local development
+# CORS — origins configurable via CORS_ORIGINS (comma-separated); "*" in dev
 # ---------------------------------------------------------------------------
+_cors_origins = [o.strip() for o in settings.CORS_ORIGINS.split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=_cors_origins,
+    allow_credentials="*" not in _cors_origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -75,11 +82,11 @@ app.add_middleware(
 # ---------------------------------------------------------------------------
 app.include_router(vehiculos_router, prefix="/vehiculos", tags=["Vehículos"])
 app.include_router(clientes_router, prefix="/clientes", tags=["Clientes"])
-app.include_router(transacciones_router, prefix="/transacciones", tags=["Transacciones"])
-app.include_router(oportunidades_router, prefix="/oportunidades", tags=["Oportunidades"])
-app.include_router(mercado_router, prefix="/mercado", tags=["Mercado"])
+app.include_router(transacciones_router, prefix="/transacciones", dependencies=[Depends(require_admin)], tags=["Transacciones"])
+app.include_router(oportunidades_router, prefix="/oportunidades", dependencies=[Depends(require_admin)], tags=["Oportunidades"])
+app.include_router(mercado_router, prefix="/mercado", dependencies=[Depends(require_admin)], tags=["Mercado"])
 app.include_router(auth_router, prefix="/auth", tags=["Auth"])
-app.include_router(agentes_router, prefix="/agentes", tags=["Agentes IA"])
+app.include_router(agentes_router, prefix="/agentes", dependencies=[Depends(require_admin)], tags=["Agentes IA"])
 
 # ---------------------------------------------------------------------------
 # Static files — uploaded vehicle images
@@ -121,7 +128,12 @@ async def health():
     return {"status": "ok"}
 
 
-@app.post("/scraping/trigger", tags=["Scraping"], summary="Ejecutar scraping manualmente")
+@app.post(
+    "/scraping/trigger",
+    tags=["Scraping"],
+    summary="Ejecutar scraping manualmente",
+    dependencies=[Depends(require_admin)],
+)
 async def trigger_scraping():
     """Trigger a full scraping scan manually (outside the scheduled interval)."""
     from backend.scraping.scraper_manager import ScraperManager

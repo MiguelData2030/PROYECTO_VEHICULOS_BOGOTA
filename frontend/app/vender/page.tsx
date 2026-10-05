@@ -74,9 +74,15 @@ export default function VenderPage() {
         body: JSON.stringify({
           nombre: form.nombre,
           telefono: form.telefono,
-          email: form.email,
+          email: form.email.trim() || null,
           tipo: 'vendedor',
-          vehiculo_interes: `${form.marca} ${form.modelo} ${form.anio}`,
+          vehiculos_interes: [{
+            marca: form.marca,
+            modelo: form.modelo,
+            anio: form.anio,
+            kilometraje: form.kilometraje,
+            precio_esperado: form.precio_esperado,
+          }],
           notas: `Km: ${form.kilometraje} | Transmisión: ${form.transmision} | Combustible: ${form.combustible} | Color: ${form.color} | Ciudad: ${form.ciudad} | Precio esperado: ${form.precio_esperado} | Descripción: ${form.descripcion}`,
         }),
       });
