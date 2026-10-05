@@ -2,11 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   BarChart3, Car, DollarSign, TrendingUp, Package, Clock,
   Target, Zap, RefreshCw, Loader2, AlertCircle, ChevronRight,
-  Users, ShoppingCart, ArrowUpRight, ArrowDownRight,
+  Users, ShoppingCart, ArrowUpRight, ArrowDownRight, LogOut,
 } from 'lucide-react';
+import { useAuth } from '@/lib/auth';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, PieChart, Pie, Cell,
@@ -21,11 +23,21 @@ import toast from 'react-hot-toast';
 const COLORS = ['#d4a843', '#e8c567', '#b08930', '#8a6d24', '#f0d78c', '#6b5320'];
 
 export default function AdminDashboard() {
+  const { user, loading: authLoading, logout } = useAuth();
+  const router = useRouter();
+
   const [stats, setStats] = useState<Estadisticas | null>(null);
   const [inventario, setInventario] = useState<VehiculoAdmin[]>([]);
   const [oportunidades, setOportunidades] = useState<Oportunidad[]>([]);
   const [loading, setLoading] = useState(true);
   const [scraping, setScraping] = useState(false);
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/login');
+    }
+  }, [authLoading, user, router]);
 
   const loadData = async () => {
     setLoading(true);
@@ -57,6 +69,14 @@ export default function AdminDashboard() {
     }
     setScraping(false);
   };
+
+  if (authLoading || (!user && !authLoading)) {
+    return (
+      <div className="pt-16 flex items-center justify-center min-h-[80vh]">
+        <Loader2 className="w-10 h-10 text-primary animate-spin" />
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -97,7 +117,8 @@ export default function AdminDashboard() {
             <h1 className="text-2xl font-display font-bold text-white">Dashboard</h1>
             <p className="text-gray-400 text-sm">Panel de administración AutoNegocio</p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-3 items-center">
+            <span className="text-gray-500 text-sm hidden sm:block">Hola, {user?.username}</span>
             <button
               onClick={handleScraping}
               disabled={scraping}
@@ -108,6 +129,13 @@ export default function AdminDashboard() {
             </button>
             <button onClick={loadData} className="btn-ghost p-2" title="Refrescar">
               <RefreshCw className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => { logout(); router.push('/'); }}
+              className="btn-ghost p-2 text-gray-500 hover:text-red-400"
+              title="Cerrar sesión"
+            >
+              <LogOut className="w-4 h-4" />
             </button>
           </div>
         </div>

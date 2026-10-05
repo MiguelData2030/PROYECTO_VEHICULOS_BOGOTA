@@ -2,16 +2,12 @@
 const nextConfig = {
   output: 'standalone',
   images: {
-    domains: ['localhost', 'api.autonegocio.co', 'images.unsplash.com'],
+    remotePatterns: [
+      { protocol: 'http', hostname: 'localhost' },
+      { protocol: 'https', hostname: '**.railway.app' },
+      { protocol: 'https', hostname: 'images.unsplash.com' },
+    ],
     unoptimized: true,
-  },
-  async rewrites() {
-    return [
-      {
-        source: '/api/:path*',
-        destination: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/:path*`,
-      },
-    ];
   },
 };
 

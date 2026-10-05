@@ -9,7 +9,8 @@ class Settings(BaseSettings):
     APP_VERSION: str = "1.0.0"
     DEBUG: bool = True
 
-    # Database
+    # Database — SQLite for dev, PostgreSQL for production
+    # Set DATABASE_URL env var in production (e.g. postgresql+asyncpg://user:pass@host/db)
     DATABASE_URL: str = "sqlite+aiosqlite:///./autonegocio.db"
 
     # JWT Auth
