@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { Car, MapPin, Phone, Mail, Clock, Facebook, Instagram, Youtube } from 'lucide-react';
+import { NEGOCIO } from '@/lib/negocio';
 
 export default function Footer() {
   return (
@@ -72,19 +73,23 @@ export default function Footer() {
             <ul className="space-y-3">
               <li className="flex items-start gap-3 text-sm text-gray-400">
                 <MapPin className="w-4 h-4 mt-0.5 text-primary flex-shrink-0" />
-                Cra 15 #93-47, Oficina 302, Bogotá, Colombia
+                {NEGOCIO.direccion}
               </li>
-              <li className="flex items-center gap-3 text-sm text-gray-400">
-                <Phone className="w-4 h-4 text-primary flex-shrink-0" />
-                +57 (601) 555-1234
-              </li>
-              <li className="flex items-center gap-3 text-sm text-gray-400">
-                <Mail className="w-4 h-4 text-primary flex-shrink-0" />
-                info@autonegocio.co
-              </li>
+              {(NEGOCIO.telefono || NEGOCIO.whatsappDisplay) && (
+                <li className="flex items-center gap-3 text-sm text-gray-400">
+                  <Phone className="w-4 h-4 text-primary flex-shrink-0" />
+                  {NEGOCIO.telefono || NEGOCIO.whatsappDisplay}
+                </li>
+              )}
+              {NEGOCIO.email && (
+                <li className="flex items-center gap-3 text-sm text-gray-400">
+                  <Mail className="w-4 h-4 text-primary flex-shrink-0" />
+                  {NEGOCIO.email}
+                </li>
+              )}
               <li className="flex items-start gap-3 text-sm text-gray-400">
                 <Clock className="w-4 h-4 mt-0.5 text-primary flex-shrink-0" />
-                Lun - Sáb: 8:00 AM - 6:00 PM
+                {NEGOCIO.horario}
               </li>
             </ul>
           </div>

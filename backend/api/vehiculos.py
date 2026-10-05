@@ -21,8 +21,6 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import Optional
 
-import os
-import shutil
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, status
@@ -33,6 +31,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.api.auth import require_admin
 from backend.models.database import get_db
 from backend.models import Vehiculo
+from backend.services import storage
 
 router = APIRouter()
 
@@ -508,21 +507,21 @@ async def subir_fotos(
             detail=f"Máximo {MAX_PHOTOS} fotos por vehículo. Actualmente hay {len(existing_photos)}, intentas subir {len(files)}.",
         )
 
-    # Save files to disk
-    upload_dir = os.path.join("uploads", "vehiculos", str(vehiculo_id))
-    os.makedirs(upload_dir, exist_ok=True)
-
+    # Store files (Supabase Storage in production, ./uploads locally)
+    MAX_BYTES = 4 * 1024 * 1024
     new_urls: list[str] = []
     for f in files:
+        data = await f.read()
+        if len(data) > MAX_BYTES:
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail=f"'{f.filename}' supera 4 MB",
+            )
         # Never trust the client filename: generate our own to avoid path
         # traversal and accidental overwrites.
         ext = f.filename.rsplit(".", 1)[-1].lower()
-        safe_name = f"{uuid.uuid4().hex}.{ext}"
-        file_path = os.path.join(upload_dir, safe_name)
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(f.file, buffer)
-        url_path = f"/uploads/vehiculos/{vehiculo_id}/{safe_name}"
-        new_urls.append(url_path)
+        path = f"vehiculos/{vehiculo_id}/{uuid.uuid4().hex}.{ext}"
+        new_urls.append(await storage.save_photo(path, data, ext))
 
     # Update vehicle's fotos field
     v.fotos = existing_photos + new_urls
@@ -551,12 +550,8 @@ async def eliminar_foto(
     if url not in fotos:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Foto no encontrada")
 
-    # Only delete files we own (inside this vehicle's upload folder)
-    prefix = f"/uploads/vehiculos/{vehiculo_id}/"
-    if url.startswith(prefix):
-        file_path = os.path.join("uploads", "vehiculos", str(vehiculo_id), os.path.basename(url))
-        if os.path.isfile(file_path):
-            os.remove(file_path)
+    # Only deletes files inside this vehicle's own folder
+    await storage.delete_photo(url, expected_prefix=f"vehiculos/{vehiculo_id}/")
 
     fotos.remove(url)
     v.fotos = fotos

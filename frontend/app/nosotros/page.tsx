@@ -13,12 +13,14 @@ import {
   ArrowRight,
   MessageCircle,
 } from 'lucide-react';
+import { whatsappUrl } from '@/lib/negocio';
 
+// Commitments (no invented figures — replace with real numbers once you have them)
 const stats = [
-  { label: 'Vehículos Vendidos', value: '+150', icon: Car },
-  { label: 'Clientes Satisfechos', value: '98%', icon: Users },
-  { label: 'Años de Experiencia', value: '5', icon: Clock },
-  { label: 'En Transacciones', value: '+$2,000M', icon: TrendingUp },
+  { label: 'Vehículos con documentos verificados', value: '100%', icon: Car },
+  { label: 'Asesoría personalizada', value: '1 a 1', icon: Users },
+  { label: 'Respuesta por WhatsApp', value: 'Lun-Sáb', icon: Clock },
+  { label: 'Precios basados en datos del mercado', value: 'IA', icon: TrendingUp },
 ];
 
 const values = [
@@ -32,13 +34,13 @@ const values = [
     icon: Award,
     title: 'Calidad',
     description:
-      'Solo trabajamos con vehículos que cumplen nuestros estrictos estándares de calidad. Cada carro pasa por una inspección de más de 150 puntos.',
+      'Solo publicamos vehículos que pasan nuestra revisión mecánica y documental. Si algo no cumple, no lo vendemos.',
   },
   {
     icon: ShieldCheck,
     title: 'Confianza',
     description:
-      'Más de 5 años en el mercado nos respaldan. Nuestros clientes son nuestra mejor carta de presentación y muchos regresan para su próximo vehículo.',
+      'Cada vehículo se verifica en RUNT antes de publicarse: propietarios, prendas, comparendos e impuestos. Te mostramos todo antes de que decidas.',
   },
   {
     icon: Lightbulb,
@@ -103,8 +105,8 @@ export default function NosotrosPage() {
       <section className="bg-surface border-y border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="text-center mb-10">
-            <h2 className="section-title">Nuestros números hablan</h2>
-            <p className="section-subtitle">Resultados que respaldan nuestra trayectoria</p>
+            <h2 className="section-title">Nuestro compromiso</h2>
+            <p className="section-subtitle">Lo que puedes esperar de cada negocio con nosotros</p>
           </div>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
             {stats.map((stat) => (
@@ -153,7 +155,7 @@ export default function NosotrosPage() {
             </p>
             <div className="flex flex-wrap gap-4">
               <a
-                href="https://wa.me/573001234567?text=Hola%2C%20quiero%20información"
+                href={whatsappUrl('Hola, quiero información')}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn-primary flex items-center gap-2"

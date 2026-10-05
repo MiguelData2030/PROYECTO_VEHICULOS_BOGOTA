@@ -1,0 +1,17 @@
+# Only the API (api/, backend/, requirements.txt) is deployed by this project.
+# Leading "/" = top-level only (backend/scraping must NOT be ignored).
+/frontend
+/uploads
+/scripts
+/agentes
+/analisis
+/dashboard
+/database
+/docs
+/scraping
+/web
+/Dockerfile
+*.db
+.env
+.env.*
+**/__pycache__

@@ -6,13 +6,14 @@ Car buying/selling business in Bogota, Colombia.
 import os
 from contextlib import asynccontextmanager
 
-from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi import Depends, FastAPI, Header, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from backend.config.settings import DEFAULT_SECRET_KEY, settings
 from backend.models.database import engine, Base
 from backend.scheduler import start_scheduler, stop_scheduler
+from backend.services import storage
 
 # Import routers
 from backend.api.vehiculos import router as vehiculos_router
@@ -25,31 +26,33 @@ from backend.api.agentes import router as agentes_router
 from backend.api.auth import require_admin
 
 
+ON_VERCEL = bool(os.environ.get("VERCEL"))
+
+if not settings.DEBUG and settings.SECRET_KEY == DEFAULT_SECRET_KEY:
+    raise RuntimeError(
+        "SECRET_KEY no configurada: define la variable de entorno SECRET_KEY en producción."
+    )
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Create DB tables on startup; clean up on shutdown."""
-    if not settings.DEBUG and settings.SECRET_KEY == DEFAULT_SECRET_KEY:
-        raise RuntimeError(
-            "SECRET_KEY no configurada: define la variable de entorno SECRET_KEY en producción."
-        )
+    """Create DB tables and start the scheduler (long-running servers only)."""
+    if not ON_VERCEL:
+        # Import all models so SQLAlchemy registers them before create_all.
+        # On Vercel tables are created once with `python -m scripts.init_prod`.
+        import backend.models  # noqa: F401
 
-    # Import all models so SQLAlchemy registers them before create_all
-    import backend.models  # noqa: F401
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
 
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
-    # Ensure uploads directory exists
-    os.makedirs("uploads", exist_ok=True)
-
-    # Start scraping scheduler
-    start_scheduler()
+        # Serverless functions can't run background jobs: there, Vercel Cron
+        # calls /scraping/cron instead.
+        start_scheduler()
 
     yield
 
-    # Stop scheduler
-    stop_scheduler()
-
+    if not ON_VERCEL:
+        stop_scheduler()
     await engine.dispose()
 
 
@@ -91,8 +94,11 @@ app.include_router(agentes_router, prefix="/agentes", dependencies=[Depends(requ
 # ---------------------------------------------------------------------------
 # Static files — uploaded vehicle images
 # ---------------------------------------------------------------------------
-os.makedirs("uploads", exist_ok=True)
-app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+# Only when photos are stored locally (development); in production they live
+# in Supabase Storage and have absolute URLs.
+if not storage.using_supabase() and not ON_VERCEL:
+    os.makedirs("uploads", exist_ok=True)
+    app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 
 # ---------------------------------------------------------------------------
@@ -151,3 +157,11 @@ async def trigger_scraping():
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error ejecutando scraping: {str(exc)}",
         )
+
+
+@app.get("/scraping/cron", tags=["Scraping"], include_in_schema=False)
+async def scraping_cron(authorization: str | None = Header(None)):
+    """Entry point for Vercel Cron (see vercel.json). Protected by CRON_SECRET."""
+    if not settings.CRON_SECRET or authorization != f"Bearer {settings.CRON_SECRET}":
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="No autorizado")
+    return await trigger_scraping()

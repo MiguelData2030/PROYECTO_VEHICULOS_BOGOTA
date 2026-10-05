@@ -17,14 +17,16 @@ import {
 } from 'lucide-react';
 import VehicleCard from '@/components/VehicleCard';
 import SearchBar from '@/components/SearchBar';
-import { vehiculosPlaceholder, formatCOP, type Vehicle } from '@/lib/data';
+import { formatCOP, type Vehicle } from '@/lib/data';
 import { fetchCatalogo } from '@/lib/api';
+import { whatsappUrl } from '@/lib/negocio';
 
+// Value propositions (no invented figures — replace with real numbers once you have them)
 const stats = [
-  { label: 'Vehículos Vendidos', value: '+150', icon: Car },
-  { label: 'Clientes Satisfechos', value: '98%', icon: Users },
-  { label: 'En Transacciones', value: '+$2,000M', icon: TrendingUp },
-  { label: 'Calificación', value: '4.9\u2605', icon: Star },
+  { label: 'Documentos verificados en RUNT', value: '100%', icon: Car },
+  { label: 'Asesoría personalizada', value: '1 a 1', icon: Users },
+  { label: 'Precios basados en datos del mercado', value: 'IA', icon: TrendingUp },
+  { label: 'Atención por WhatsApp', value: 'Lun-Sáb', icon: Star },
 ];
 
 const benefits = [
@@ -53,18 +55,12 @@ const benefits = [
 const brands = ['Toyota', 'Mazda', 'Chevrolet', 'Kia', 'Renault', 'Hyundai'];
 
 export default function HomePage() {
-  const [featured, setFeatured] = useState<Vehicle[]>(vehiculosPlaceholder.slice(0, 6));
+  const [featured, setFeatured] = useState<Vehicle[]>([]);
 
   useEffect(() => {
     fetchCatalogo()
-      .then((data) => {
-        if (data.length > 0) {
-          setFeatured(data.slice(0, 6));
-        }
-      })
-      .catch(() => {
-        // Keep placeholder data on error
-      });
+      .then((data) => setFeatured(data.slice(0, 6)))
+      .catch(() => setFeatured([]));
   }, []);
 
   return (
@@ -121,6 +117,11 @@ export default function HomePage() {
             <VehicleCard key={v.id} vehicle={v} />
           ))}
         </div>
+        {featured.length === 0 && (
+          <div className="card p-10 text-center text-gray-400">
+            Estamos preparando nuevos vehículos. Escríbenos por WhatsApp y te avisamos apenas lleguen.
+          </div>
+        )}
         <div className="mt-8 text-center sm:hidden">
           <Link href="/catalogo" className="btn-secondary inline-flex items-center gap-2">
             Ver todo el catálogo
@@ -201,7 +202,7 @@ export default function HomePage() {
             </p>
             <div className="flex flex-wrap gap-4">
               <a
-                href="https://wa.me/573001234567?text=Hola%2C%20estoy%20interesado%20en%20un%20veh%C3%ADculo"
+                href={whatsappUrl('Hola, estoy interesado en un vehículo')}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn-primary flex items-center gap-2"

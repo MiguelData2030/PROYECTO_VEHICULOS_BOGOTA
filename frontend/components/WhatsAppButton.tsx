@@ -1,14 +1,14 @@
 'use client';
 
 import { MessageCircle } from 'lucide-react';
+import { NEGOCIO, whatsappUrl } from '@/lib/negocio';
 
 export default function WhatsAppButton() {
-  const whatsappNumber = '573001234567';
-  const message = encodeURIComponent('Hola, estoy interesado en un vehículo de AutoNegocio. ¿Podrían darme más información?');
+  if (!NEGOCIO.whatsapp) return null;
 
   return (
     <a
-      href={`https://wa.me/${whatsappNumber}?text=${message}`}
+      href={whatsappUrl('Hola, estoy interesado en un vehículo de AutoNegocio. ¿Podrían darme más información?')}
       target="_blank"
       rel="noopener noreferrer"
       className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center shadow-lg shadow-green-500/30 hover:scale-110 transition-all duration-300 group"

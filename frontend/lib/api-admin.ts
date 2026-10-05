@@ -223,11 +223,36 @@ export async function deleteVehiculo(id: number): Promise<void> {
   await api.delete(`/vehiculos/${id}`);
 }
 
+/**
+ * Downscale a phone photo to max 1920px JPEG (~300-600 KB) so uploads stay
+ * well under Vercel's 4.5 MB request limit and the catalogue loads fast.
+ */
+async function compressImage(file: File, maxSide = 1920, quality = 0.82): Promise<File> {
+  try {
+    const bitmap = await createImageBitmap(file);
+    const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(bitmap.width * scale);
+    canvas.height = Math.round(bitmap.height * scale);
+    canvas.getContext('2d')!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    const blob = await new Promise<Blob | null>((r) => canvas.toBlob(r, 'image/jpeg', quality));
+    if (!blob || blob.size >= file.size) return file;
+    return new File([blob], file.name.replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' });
+  } catch {
+    return file; // unsupported format in this browser: send as-is
+  }
+}
+
+/** Uploads photos one per request (keeps each request small). */
 export async function uploadFotos(id: number, files: File[]): Promise<VehiculoAdmin> {
-  const form = new FormData();
-  files.forEach((f) => form.append('files', f));
-  const { data } = await api.post(`/vehiculos/${id}/fotos`, form, { timeout: 60000 });
-  return data;
+  let last: VehiculoAdmin | null = null;
+  for (const original of files) {
+    const form = new FormData();
+    form.append('files', await compressImage(original));
+    const { data } = await api.post(`/vehiculos/${id}/fotos`, form, { timeout: 60000 });
+    last = data;
+  }
+  return last!;
 }
 
 export async function deleteFoto(id: number, url: string): Promise<VehiculoAdmin> {

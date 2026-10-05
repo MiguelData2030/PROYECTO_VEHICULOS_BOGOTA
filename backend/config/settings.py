@@ -25,6 +25,15 @@ class Settings(BaseSettings):
     # In production set e.g. CORS_ORIGINS=https://www.autonegocio.co,https://autonegocio.vercel.app
     CORS_ORIGINS: str = "*"
 
+    # Supabase Storage (vehicle photos). Leave empty in development to store
+    # photos in ./uploads instead.
+    SUPABASE_URL: Optional[str] = None
+    SUPABASE_SERVICE_ROLE_KEY: Optional[str] = None
+    SUPABASE_BUCKET: str = "fotos"
+
+    # Vercel Cron sends "Authorization: Bearer <CRON_SECRET>" to /scraping/cron
+    CRON_SECRET: Optional[str] = None
+
     # Scraping
     SCRAPING_INTERVAL_MINUTES: int = 30
     MAX_CONCURRENT_SCRAPERS: int = 5

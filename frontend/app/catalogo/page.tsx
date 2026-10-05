@@ -4,7 +4,7 @@ import { Suspense, useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { SlidersHorizontal, ArrowUpDown, Grid3X3, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import VehicleCard from '@/components/VehicleCard';
-import { vehiculosPlaceholder, marcas, tiposVehiculo, transmisiones, combustibles, type Vehicle } from '@/lib/data';
+import { marcas, tiposVehiculo, transmisiones, combustibles, type Vehicle } from '@/lib/data';
 import { fetchCatalogo, type CatalogoFilters } from '@/lib/api';
 
 type SortOption = 'precio_asc' | 'precio_desc' | 'anio_desc' | 'km_asc';
@@ -62,18 +62,8 @@ function CatalogoContent() {
       setVehicles(data);
       setUsingFallback(false);
     } catch {
-      // Fallback to placeholder data if backend is unreachable
-      let result = [...vehiculosPlaceholder];
-      if (filtraMarca) result = result.filter((v) => v.marca === filtraMarca);
-      if (filtraTipo) result = result.filter((v) => v.tipo === filtraTipo);
-      if (anioMin) result = result.filter((v) => v.anio >= Number(anioMin));
-      if (anioMax) result = result.filter((v) => v.anio <= Number(anioMax));
-      if (precioMin) result = result.filter((v) => v.precio >= Number(precioMin));
-      if (precioMax) result = result.filter((v) => v.precio <= Number(precioMax));
-      if (kmMax) result = result.filter((v) => v.kilometraje <= Number(kmMax));
-      if (transmision) result = result.filter((v) => v.transmision === transmision);
-      if (combustible) result = result.filter((v) => v.combustible === combustible);
-      setVehicles(result);
+      // Never show demo vehicles in production
+      setVehicles([]);
       setUsingFallback(true);
     } finally {
       setLoading(false);
@@ -142,7 +132,7 @@ function CatalogoContent() {
           <p className="section-subtitle">
             {loading
               ? 'Cargando vehículos...'
-              : `${filtered.length} vehículos ${usingFallback ? '(datos de demostración)' : 'disponibles'}`}
+              : `${usingFallback ? 'No pudimos cargar el catálogo. Intenta de nuevo en unos minutos.' : `${filtered.length} vehículos disponibles`}`}
           </p>
         </div>
 

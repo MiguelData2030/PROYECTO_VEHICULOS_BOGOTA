@@ -10,33 +10,34 @@ import {
   Send,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { NEGOCIO, whatsappUrl, mapsUrl } from '@/lib/negocio';
 
 const contactInfo = [
   {
     icon: MessageCircle,
     title: 'WhatsApp',
-    value: '+57 300 123 4567',
-    href: 'https://wa.me/573001234567',
+    value: NEGOCIO.whatsappDisplay,
+    href: whatsappUrl(),
   },
   {
     icon: Mail,
     title: 'Email',
-    value: 'info@autonegocio.co',
-    href: 'mailto:info@autonegocio.co',
+    value: NEGOCIO.email,
+    href: `mailto:${NEGOCIO.email}`,
   },
   {
     icon: MapPin,
     title: 'Dirección',
-    value: 'Av. Calle 26 #69-76, Bogotá',
-    href: 'https://maps.google.com/?q=Av.+Calle+26+%2369-76+Bogota',
+    value: NEGOCIO.direccion,
+    href: mapsUrl(),
   },
   {
     icon: Clock,
     title: 'Horario',
-    value: 'Lun-Sáb 8am-6pm',
+    value: NEGOCIO.horario,
     href: null,
   },
-];
+].filter((c) => c.value);
 
 const asuntos = [
   'Comprar vehículo',
@@ -65,11 +66,27 @@ export default function ContactoPage() {
     e.preventDefault();
     setLoading(true);
 
-    // Simulate sending
-    await new Promise((r) => setTimeout(r, 800));
-    toast.success('Mensaje enviado. Te contactaremos pronto.');
-    setForm({ nombre: '', email: '', telefono: '', asunto: '', mensaje: '' });
-    setLoading(false);
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      const res = await fetch(`${apiUrl}/clientes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nombre: form.nombre,
+          telefono: form.telefono || null,
+          email: form.email.trim() || null,
+          tipo: form.asunto === 'Vender vehículo' ? 'vendedor' : 'comprador',
+          notas: `[Contacto web] ${form.asunto || 'Sin asunto'}: ${form.mensaje}`,
+        }),
+      });
+      if (!res.ok) throw new Error('Error al enviar');
+      toast.success('Mensaje enviado. Te contactaremos pronto.');
+      setForm({ nombre: '', email: '', telefono: '', asunto: '', mensaje: '' });
+    } catch {
+      toast.error('No pudimos enviar tu mensaje. Escríbenos por WhatsApp.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -233,7 +250,7 @@ export default function ContactoPage() {
                 disponible de lunes a sábado de 8am a 6pm.
               </p>
               <a
-                href="https://wa.me/573001234567?text=Hola%2C%20quiero%20información"
+                href={whatsappUrl('Hola, quiero información')}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn-primary flex items-center justify-center gap-2 w-full"

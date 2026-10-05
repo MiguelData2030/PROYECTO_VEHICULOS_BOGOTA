@@ -10,8 +10,9 @@ import {
   Car, Hash, Cog,
 } from 'lucide-react';
 import FinancingCalculator from '@/components/FinancingCalculator';
-import { formatCOP, formatNumber, type Vehicle, vehiculosPlaceholder } from '@/lib/data';
+import { formatCOP, formatNumber, type Vehicle } from '@/lib/data';
 import { fetchVehiculo } from '@/lib/api';
+import { whatsappUrl, telUrl } from '@/lib/negocio';
 
 export default function VehiculoDetallePage() {
   const params = useParams();
@@ -24,19 +25,8 @@ export default function VehiculoDetallePage() {
   useEffect(() => {
     setLoading(true);
     fetchVehiculo(id)
-      .then((data) => {
-        if (data) {
-          setVehicle(data);
-        } else {
-          // Fallback to placeholder
-          const placeholder = vehiculosPlaceholder.find((v) => v.id === id) || null;
-          setVehicle(placeholder);
-        }
-      })
-      .catch(() => {
-        const placeholder = vehiculosPlaceholder.find((v) => v.id === id) || null;
-        setVehicle(placeholder);
-      })
+      .then((data) => setVehicle(data))
+      .catch(() => setVehicle(null))
       .finally(() => setLoading(false));
   }, [id]);
 
@@ -226,7 +216,7 @@ export default function VehiculoDetallePage() {
               {/* Contact Buttons */}
               <div className="space-y-3">
                 <a
-                  href={`https://wa.me/573001234567?text=${whatsappMsg}`}
+                  href={`${whatsappUrl()}?text=${whatsappMsg}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn-primary w-full flex items-center justify-center gap-2 text-base py-3"
@@ -235,7 +225,7 @@ export default function VehiculoDetallePage() {
                   Consultar por WhatsApp
                 </a>
                 <a
-                  href="tel:+573001234567"
+                  href={telUrl()}
                   className="btn-secondary w-full flex items-center justify-center gap-2 text-base py-3"
                 >
                   <Phone className="w-5 h-5" />
