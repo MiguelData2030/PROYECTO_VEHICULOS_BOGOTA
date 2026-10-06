@@ -24,6 +24,7 @@ from backend.api.oportunidades import router as oportunidades_router
 from backend.api.mercado import router as mercado_router
 from backend.api.auth import router as auth_router
 from backend.api.agentes import router as agentes_router
+from backend.api.demo import router as demo_router
 from backend.api.auth import require_admin
 
 
@@ -98,6 +99,7 @@ app.include_router(oportunidades_router, prefix="/oportunidades", dependencies=[
 app.include_router(mercado_router, prefix="/mercado", dependencies=[Depends(require_admin)], tags=["Mercado"])
 app.include_router(auth_router, prefix="/auth", tags=["Auth"])
 app.include_router(agentes_router, prefix="/agentes", dependencies=[Depends(require_admin)], tags=["Agentes IA"])
+app.include_router(demo_router, prefix="/demo", dependencies=[Depends(require_admin)], tags=["Demo"])
 
 # ---------------------------------------------------------------------------
 # Static files — uploaded vehicle images

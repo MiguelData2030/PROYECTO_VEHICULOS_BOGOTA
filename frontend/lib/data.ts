@@ -279,6 +279,7 @@ export const vehiculosPlaceholder: Vehicle[] = [
 export const marcas = [
   'Toyota', 'Mazda', 'Chevrolet', 'Kia', 'Renault',
   'Hyundai', 'Nissan', 'Ford', 'Volkswagen', 'Suzuki',
+  'Jeep', 'Mitsubishi', 'BMW', 'Mercedes-Benz', 'Audi',
 ];
 
 export const tiposVehiculo = ['SUV', 'Sedán', 'Hatchback', 'Pickup', 'Camioneta', 'Van'];
@@ -294,6 +295,14 @@ export function formatCOP(value: number): string {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(value);
+}
+
+/** Compact COP for KPI cards: $586,9 M · $5.361 M · $850.000 */
+export function formatCOPCompact(value: number): string {
+  if (Math.abs(value) < 1_000_000) return formatCOP(value);
+  const millones = value / 1_000_000;
+  const decimals = Math.abs(millones) >= 100 ? 0 : 1;
+  return `$${millones.toLocaleString('es-CO', { maximumFractionDigits: decimals })} M`;
 }
 
 export function formatNumber(value: number): string {

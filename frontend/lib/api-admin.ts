@@ -130,19 +130,32 @@ export async function fetchOportunidadesStats() {
   }
 }
 
-// --- Transacciones Dashboard ---
+// --- Transacciones / KPIs del negocio ---
+
+export interface MesKPI {
+  mes: string; // YYYY-MM
+  ventas: number;
+  ingresos: number;
+  ganancia: number;
+  compras: number;
+  inversion: number;
+}
 
 export interface DashboardKPIs {
   ventas_mes_actual: number;
   ingresos_mes_actual: number;
   ganancia_mes_actual: number;
-  ventas_anio: number;
-  ingresos_anio: number;
-  ganancia_anio: number;
+  ventas_12m: number;
+  ingresos_12m: number;
+  ganancia_12m: number;
   margen_promedio_pct: number | null;
-  vehiculos_en_inventario: number;
-  dias_promedio_inventario: number | null;
   ticket_promedio: number | null;
+  dias_promedio_venta: number | null;
+  vehiculos_en_inventario: number;
+  valor_inventario_venta: number;
+  capital_invertido: number;
+  meses: MesKPI[];
+  ventas_por_marca: Record<string, number>;
 }
 
 export async function fetchDashboardKPIs(): Promise<DashboardKPIs | null> {
@@ -152,6 +165,84 @@ export async function fetchDashboardKPIs(): Promise<DashboardKPIs | null> {
   } catch {
     return null;
   }
+}
+
+export interface Transaccion {
+  id: number;
+  vehiculo_id: number;
+  cliente_id: number;
+  tipo: 'compra' | 'venta';
+  precio: number;
+  comision: number | null;
+  gastos_traspaso: number | null;
+  gastos_reacondicionamiento: number | null;
+  ganancia_neta: number | null;
+  margen_pct: number | null;
+  fecha: string;
+  notas: string | null;
+  vehiculo_nombre: string | null;
+  cliente_nombre: string | null;
+  dias_en_inventario: number | null;
+}
+
+export async function fetchTransacciones(params: { tipo?: string; desde?: string; hasta?: string } = {}): Promise<Transaccion[]> {
+  const { data } = await api.get('/transacciones', { params: { limit: 1000, ...params } });
+  return data;
+}
+
+export interface TransaccionInput {
+  vehiculo_id: number;
+  cliente_id: number;
+  tipo: 'compra' | 'venta';
+  precio: number;
+  comision?: number | null;
+  gastos_traspaso?: number | null;
+  gastos_reacondicionamiento?: number | null;
+  fecha?: string;
+  notas?: string | null;
+}
+
+export async function createTransaccion(payload: TransaccionInput): Promise<Transaccion> {
+  const { data } = await api.post('/transacciones', payload);
+  return data;
+}
+
+export async function deleteTransaccion(id: number): Promise<void> {
+  await api.delete(`/transacciones/${id}`);
+}
+
+export async function createCliente(payload: {
+  nombre: string; telefono?: string | null; email?: string | null; tipo: string; notas?: string | null;
+}): Promise<Cliente> {
+  const { data } = await api.post('/clientes', payload);
+  return data;
+}
+
+// --- Datos de demostración ---
+
+export interface DemoEstado {
+  cargado: boolean;
+  vehiculos: number;
+  clientes: number;
+  transacciones: number;
+}
+
+export async function fetchDemoEstado(): Promise<DemoEstado | null> {
+  try {
+    const { data } = await api.get('/demo');
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+export async function cargarDemo(): Promise<DemoEstado> {
+  const { data } = await api.post('/demo', null, { timeout: 120000 });
+  return data;
+}
+
+export async function borrarDemo(): Promise<void> {
+  await api.delete('/demo', { timeout: 120000 });
 }
 
 // --- Vehículos (inventario interno) ---

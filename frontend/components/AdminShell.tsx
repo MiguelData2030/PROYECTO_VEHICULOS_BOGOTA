@@ -3,12 +3,13 @@
 import { useEffect, type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { BarChart3, Car, Target, Users, LogOut, Loader2 } from 'lucide-react';
+import { BarChart3, Car, Target, Users, LogOut, Loader2, Receipt } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 
 const tabs = [
   { href: '/admin', label: 'Dashboard', icon: BarChart3 },
   { href: '/admin/inventario', label: 'Inventario', icon: Car },
+  { href: '/admin/ventas', label: 'Ventas', icon: Receipt },
   { href: '/admin/oportunidades', label: 'Oportunidades', icon: Target },
   { href: '/admin/leads', label: 'Leads', icon: Users },
 ];
@@ -49,7 +50,7 @@ export default function AdminShell({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <nav className="flex gap-1 mb-6 overflow-x-auto border-b border-border">
           {tabs.map(({ href, label, icon: Icon }) => {
-            const active = pathname === href;
+            const active = pathname.replace(/\/$/, '') === href;
             return (
               <Link
                 key={href}

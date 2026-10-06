@@ -1,371 +1,236 @@
 """
 Router: /transacciones
-CRUD for Transaccion model + monthly/yearly report and dashboard KPIs.
-All monetary values in COP.
+Buy / sell transactions and the business KPIs derived from them.
+All amounts in COP. Mirrors backend.models.transaccion.Transaccion.
+
+ganancia_neta (sales only) = precio de venta
+                             - precio de compra del vehículo
+                             - comisión - gastos de traspaso - reacondicionamiento
 """
 
 from __future__ import annotations
 
-from datetime import date, datetime
-from decimal import Decimal
+from collections import defaultdict
+from datetime import date, datetime, time, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from pydantic import BaseModel, Field, model_validator
-from sqlalchemy import extract, func, select, and_
+from pydantic import BaseModel, Field, field_validator
+from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend.models import Cliente, Transaccion, Vehiculo
 from backend.models.database import get_db
-from backend.models import Transaccion, Vehiculo, Cliente
 
 router = APIRouter()
 
+TIPOS = {"compra", "venta"}
+
 # ---------------------------------------------------------------------------
-# Pydantic schemas
+# Schemas
 # ---------------------------------------------------------------------------
 
-class TransaccionBase(BaseModel):
+
+class TransaccionCreate(BaseModel):
     vehiculo_id: int
-    cliente_id: Optional[int] = None
-    tipo: str = Field(..., description="compra | venta | consignacion")
-    precio_acordado: Decimal = Field(..., ge=0, description="Precio de la transacción en COP")
-    forma_pago: Optional[str] = Field(None, description="efectivo | transferencia | financiado | credito")
+    cliente_id: int
+    tipo: str = Field(..., description="compra | venta")
+    precio: float = Field(..., gt=0, description="Precio de la transacción en COP")
+    comision: Optional[float] = Field(None, ge=0)
+    gastos_traspaso: Optional[float] = Field(None, ge=0, description="Traspaso, notaría, RUNT")
+    gastos_reacondicionamiento: Optional[float] = Field(None, ge=0, description="Taller, pintura, llantas, lavado")
     fecha: date = Field(default_factory=date.today)
-    gastos_transaccion: Optional[Decimal] = Field(None, ge=0, description="Notaría, traspaso, etc. en COP")
-    gastos_reparacion_tx: Optional[Decimal] = Field(None, ge=0, description="Reparaciones cubiertas en esta tx")
-    descuento: Optional[Decimal] = Field(None, ge=0, description="Descuento aplicado en COP")
-    comision: Optional[Decimal] = Field(None, ge=0, description="Comisión de intermediario en COP")
-    impuestos: Optional[Decimal] = Field(None, ge=0, description="Impuestos de la transacción en COP")
     notas: Optional[str] = None
-    numero_documento: Optional[str] = Field(None, max_length=50, description="# contrato / factura")
-    vendedor: Optional[str] = Field(None, max_length=100, description="Nombre del asesor/vendedor")
+
+    @field_validator("tipo")
+    @classmethod
+    def tipo_valido(cls, v: str) -> str:
+        if v not in TIPOS:
+            raise ValueError(f"tipo debe ser uno de: {sorted(TIPOS)}")
+        return v
 
 
-class TransaccionCreate(TransaccionBase):
-
-    @model_validator(mode="after")
-    def tipo_valido(self) -> "TransaccionCreate":
-        opciones = {"compra", "venta", "consignacion"}
-        if self.tipo not in opciones:
-            raise ValueError(f"tipo debe ser uno de: {opciones}")
-        return self
-
-
-class TransaccionUpdate(BaseModel):
-    cliente_id: Optional[int] = None
-    tipo: Optional[str] = None
-    precio_acordado: Optional[Decimal] = Field(None, ge=0)
-    forma_pago: Optional[str] = None
-    fecha: Optional[date] = None
-    gastos_transaccion: Optional[Decimal] = Field(None, ge=0)
-    gastos_reparacion_tx: Optional[Decimal] = Field(None, ge=0)
-    descuento: Optional[Decimal] = Field(None, ge=0)
-    comision: Optional[Decimal] = Field(None, ge=0)
-    impuestos: Optional[Decimal] = Field(None, ge=0)
-    notas: Optional[str] = None
-    numero_documento: Optional[str] = None
-    vendedor: Optional[str] = None
-
-
-class TransaccionOut(TransaccionBase):
+class TransaccionOut(BaseModel):
     id: int
-    ganancia_neta: Optional[Decimal] = None
+    vehiculo_id: int
+    cliente_id: int
+    tipo: str
+    precio: float
+    comision: Optional[float] = None
+    gastos_traspaso: Optional[float] = None
+    gastos_reacondicionamiento: Optional[float] = None
+    ganancia_neta: Optional[float] = None
     margen_pct: Optional[float] = None
-    creado_en: Optional[datetime] = None
-
-    # Denormalized for convenience
+    fecha: datetime
+    notas: Optional[str] = None
     vehiculo_nombre: Optional[str] = None
     cliente_nombre: Optional[str] = None
+    dias_en_inventario: Optional[int] = None
 
-    model_config = {"from_attributes": True}
 
-
-# ---------------------------------------------------------------------------
-# Report / KPI schemas
-# ---------------------------------------------------------------------------
-
-class MesReporte(BaseModel):
-    anio: int
-    mes: int
+class MesKPI(BaseModel):
+    mes: str  # YYYY-MM
     ventas: int
+    ingresos: float
+    ganancia: float
     compras: int
-    ingresos_cop: Decimal
-    gastos_cop: Decimal
-    ganancia_neta_cop: Decimal
-    margen_pct: Optional[float]
-    ticket_promedio_cop: Optional[Decimal]
-
-
-class ReporteResponse(BaseModel):
-    periodo: str
-    meses: list[MesReporte]
-    totales: dict
+    inversion: float
 
 
 class DashboardKPIs(BaseModel):
-    # Sales this calendar month
     ventas_mes_actual: int
-    ingresos_mes_actual: Decimal
-    ganancia_mes_actual: Decimal
-    margen_promedio_mes: Optional[float]
-
-    # Sales this year
-    ventas_anio_actual: int
-    ingresos_anio_actual: Decimal
-    ganancia_anio_actual: Decimal
-
-    # Inventory
-    vehiculos_disponibles: int
-    valor_inventario_cop: Decimal
-    dias_promedio_inventario: Optional[float]
-
-    # Velocity
-    tiempo_promedio_venta_dias: Optional[float]
-
-    # Overall
-    total_transacciones: int
-    ticket_promedio_cop: Optional[Decimal]
+    ingresos_mes_actual: float
+    ganancia_mes_actual: float
+    ventas_12m: int
+    ingresos_12m: float
+    ganancia_12m: float
+    margen_promedio_pct: Optional[float]
+    ticket_promedio: Optional[float]
+    dias_promedio_venta: Optional[float]
+    vehiculos_en_inventario: int
+    valor_inventario_venta: float
+    capital_invertido: float
+    meses: list[MesKPI]
+    ventas_por_marca: dict[str, int]
 
 
 # ---------------------------------------------------------------------------
-# Helper: compute ganancia_neta for a venta transaction
+# Helpers
 # ---------------------------------------------------------------------------
 
-def _calcular_ganancia(tx: Transaccion, precio_compra: Optional[Decimal]) -> Optional[Decimal]:
-    """
-    ganancia_neta = precio_acordado
-                    - precio_compra (if available)
-                    - gastos_transaccion
-                    - gastos_reparacion_tx
-                    - comision
-                    - impuestos
-                    + (no descuento subtracted here — descuento already reduces precio_acordado)
-    """
-    if tx.tipo != "venta":
+
+def _as_date(value) -> Optional[date]:
+    if value is None:
         return None
-    if precio_compra is None:
+    return value.date() if isinstance(value, datetime) else value
+
+
+def _gastos(tx: Transaccion) -> float:
+    return (tx.comision or 0) + (tx.gastos_traspaso or 0) + (tx.gastos_reacondicionamiento or 0)
+
+
+def _ganancia(tx: Transaccion, vehiculo: Optional[Vehiculo]) -> Optional[float]:
+    if tx.tipo != "venta" or not vehiculo or not vehiculo.precio_compra:
         return None
-
-    ganancia = Decimal(str(tx.precio_acordado)) - Decimal(str(precio_compra))
-    for field in ("gastos_transaccion", "gastos_reparacion_tx", "comision", "impuestos"):
-        val = getattr(tx, field)
-        if val:
-            ganancia -= Decimal(str(val))
-    return ganancia
+    return tx.precio - vehiculo.precio_compra - _gastos(tx)
 
 
-def _enrich_tx(tx: Transaccion, vehiculo: Optional[Vehiculo] = None, cliente: Optional[Cliente] = None) -> dict:
-    data = {c.name: getattr(tx, c.name) for c in tx.__table__.columns}
-    precio_compra = Decimal(str(vehiculo.precio_compra)) if vehiculo and vehiculo.precio_compra else None
-    ganancia = _calcular_ganancia(tx, precio_compra)
-    data["ganancia_neta"] = ganancia
-    data["margen_pct"] = (
-        float(ganancia / precio_compra * 100) if (ganancia is not None and precio_compra and precio_compra > 0) else None
-    )
-    data["vehiculo_nombre"] = (
-        f"{vehiculo.marca} {vehiculo.modelo} {vehiculo.anio}" if vehiculo else None
-    )
-    data["cliente_nombre"] = cliente.nombre if cliente else None
-    return data
+def _to_out(tx: Transaccion, vehiculo: Optional[Vehiculo], cliente: Optional[Cliente]) -> dict:
+    ganancia = tx.ganancia_neta if tx.ganancia_neta is not None else _ganancia(tx, vehiculo)
+    margen = None
+    if ganancia is not None and vehiculo and vehiculo.precio_compra:
+        margen = round(ganancia / vehiculo.precio_compra * 100, 1)
+    dias = None
+    if tx.tipo == "venta" and vehiculo and vehiculo.fecha_compra:
+        dias = (_as_date(tx.fecha) - _as_date(vehiculo.fecha_compra)).days
+    return {
+        "id": tx.id,
+        "vehiculo_id": tx.vehiculo_id,
+        "cliente_id": tx.cliente_id,
+        "tipo": tx.tipo,
+        "precio": tx.precio,
+        "comision": tx.comision,
+        "gastos_traspaso": tx.gastos_traspaso,
+        "gastos_reacondicionamiento": tx.gastos_reacondicionamiento,
+        "ganancia_neta": ganancia,
+        "margen_pct": margen,
+        "fecha": tx.fecha,
+        "notas": tx.notas,
+        "vehiculo_nombre": f"{vehiculo.marca} {vehiculo.modelo} {vehiculo.año}" if vehiculo else None,
+        "cliente_nombre": cliente.nombre if cliente else None,
+        "dias_en_inventario": dias,
+    }
+
+
+def _month_key(d: date) -> str:
+    return f"{d.year}-{d.month:02d}"
+
+
+def _last_12_months(today: date) -> list[str]:
+    keys = []
+    y, m = today.year, today.month
+    for _ in range(12):
+        keys.append(f"{y}-{m:02d}")
+        m -= 1
+        if m == 0:
+            y, m = y - 1, 12
+    return list(reversed(keys))
 
 
 # ---------------------------------------------------------------------------
-# Endpoints
+# Endpoints (fixed paths before /{id})
 # ---------------------------------------------------------------------------
 
-@router.get("/dashboard", response_model=DashboardKPIs, summary="KPIs del dashboard")
+
+@router.get("/dashboard", response_model=DashboardKPIs, summary="KPIs del negocio")
 async def dashboard(db: AsyncSession = Depends(get_db)):
-    """
-    Returns key performance indicators for the main dashboard:
-    - Sales this month and year (count + COP amounts)
-    - Average margin %, avg days to sell
-    - Current inventory count and value
-    """
     today = date.today()
-    current_month = today.month
-    current_year = today.year
+    meses_keys = _last_12_months(today)
+    meses = {k: {"ventas": 0, "ingresos": 0.0, "ganancia": 0.0, "compras": 0, "inversion": 0.0} for k in meses_keys}
 
-    # All transactions
-    all_tx_result = await db.execute(select(Transaccion))
-    all_tx: list[Transaccion] = all_tx_result.scalars().all()
+    txs = (await db.execute(select(Transaccion))).scalars().all()
+    vehiculos = {v.id: v for v in (await db.execute(select(Vehiculo))).scalars().all()}
 
-    # Pre-fetch vehicles and clients as dicts for O(1) lookup
-    all_v_result = await db.execute(select(Vehiculo))
-    vehiculos_map: dict[int, Vehiculo] = {v.id: v for v in all_v_result.scalars().all()}
-
-    all_c_result = await db.execute(select(Cliente))
-    clientes_map: dict[int, Cliente] = {c.id: c for c in all_c_result.scalars().all()}
-
-    # Aggregate
     ventas_mes = 0
-    ingresos_mes = Decimal(0)
-    ganancia_mes = Decimal(0)
-    margenes_mes: list[float] = []
-
-    ventas_anio = 0
-    ingresos_anio = Decimal(0)
-    ganancia_anio = Decimal(0)
-
-    total_tx = len(all_tx)
-    tickets: list[Decimal] = []
+    ingresos_mes = ganancia_mes = 0.0
+    margenes: list[float] = []
+    tickets: list[float] = []
     dias_venta: list[int] = []
+    por_marca: dict[str, int] = defaultdict(int)
 
-    for tx in all_tx:
-        vehiculo = vehiculos_map.get(tx.vehiculo_id)
-        cliente = clientes_map.get(tx.cliente_id) if tx.cliente_id else None
-        precio_compra = Decimal(str(vehiculo.precio_compra)) if vehiculo and vehiculo.precio_compra else None
-        ganancia = _calcular_ganancia(tx, precio_compra)
-
-        tx_date: date = tx.fecha if isinstance(tx.fecha, date) else tx.fecha.date()
-        precio = Decimal(str(tx.precio_acordado))
-        tickets.append(precio)
-
+    for tx in txs:
+        d = _as_date(tx.fecha)
+        key = _month_key(d)
+        v = vehiculos.get(tx.vehiculo_id)
         if tx.tipo == "venta":
-            if tx_date.year == current_year and tx_date.month == current_month:
+            g = tx.ganancia_neta if tx.ganancia_neta is not None else (_ganancia(tx, v) or 0.0)
+            if key in meses:
+                meses[key]["ventas"] += 1
+                meses[key]["ingresos"] += tx.precio
+                meses[key]["ganancia"] += g
+                tickets.append(tx.precio)
+                if v and v.precio_compra:
+                    margenes.append(g / v.precio_compra * 100)
+                if v and v.fecha_compra:
+                    dias_venta.append((d - _as_date(v.fecha_compra)).days)
+                if v:
+                    por_marca[v.marca] += 1
+            if key == meses_keys[-1]:
                 ventas_mes += 1
-                ingresos_mes += precio
-                if ganancia is not None:
-                    ganancia_mes += ganancia
-                    if precio_compra and precio_compra > 0:
-                        margenes_mes.append(float(ganancia / precio_compra * 100))
+                ingresos_mes += tx.precio
+                ganancia_mes += g
+        elif tx.tipo == "compra" and key in meses:
+            meses[key]["compras"] += 1
+            meses[key]["inversion"] += tx.precio + _gastos(tx)
 
-            if tx_date.year == current_year:
-                ventas_anio += 1
-                ingresos_anio += precio
-                if ganancia is not None:
-                    ganancia_anio += ganancia
-
-            # Days to sell
-            if vehiculo and vehiculo.fecha_compra:
-                dias = (tx_date - vehiculo.fecha_compra).days
-                if dias >= 0:
-                    dias_venta.append(dias)
-
-    # Inventory stats
-    disponibles = [v for v in vehiculos_map.values() if v.estado == "disponible"]
-    valor_inv = sum(Decimal(str(v.precio_venta)) for v in disponibles if v.precio_venta)
-
-    dias_inv: list[int] = []
-    for v in disponibles:
-        if v.fecha_compra:
-            dias_inv.append((today - v.fecha_compra).days)
-
+    en_inventario = [v for v in vehiculos.values() if v.estado != "vendido"]
     return DashboardKPIs(
         ventas_mes_actual=ventas_mes,
         ingresos_mes_actual=ingresos_mes,
         ganancia_mes_actual=ganancia_mes,
-        margen_promedio_mes=sum(margenes_mes) / len(margenes_mes) if margenes_mes else None,
-        ventas_anio_actual=ventas_anio,
-        ingresos_anio_actual=ingresos_anio,
-        ganancia_anio_actual=ganancia_anio,
-        vehiculos_disponibles=len(disponibles),
-        valor_inventario_cop=valor_inv,
-        dias_promedio_inventario=sum(dias_inv) / len(dias_inv) if dias_inv else None,
-        tiempo_promedio_venta_dias=sum(dias_venta) / len(dias_venta) if dias_venta else None,
-        total_transacciones=total_tx,
-        ticket_promedio_cop=sum(tickets) / len(tickets) if tickets else None,
-    )
-
-
-@router.get("/reporte", response_model=ReporteResponse, summary="Reporte mensual/anual")
-async def reporte(
-    anio: int = Query(default=None, description="Año (default: año actual)"),
-    mes: Optional[int] = Query(None, ge=1, le=12, description="Mes específico (opcional)"),
-    db: AsyncSession = Depends(get_db),
-):
-    """
-    Monthly / yearly report.
-    Returns per-month breakdown of sales count, revenue, costs, and net profit.
-    """
-    today = date.today()
-    anio = anio or today.year
-
-    conditions = [extract("year", Transaccion.fecha) == anio]
-    if mes:
-        conditions.append(extract("month", Transaccion.fecha) == mes)
-
-    result = await db.execute(select(Transaccion).where(and_(*conditions)).order_by(Transaccion.fecha))
-    txs: list[Transaccion] = result.scalars().all()
-
-    all_v_result = await db.execute(select(Vehiculo))
-    vehiculos_map: dict[int, Vehiculo] = {v.id: v for v in all_v_result.scalars().all()}
-
-    # Group by month
-    from collections import defaultdict
-    meses_data: dict[int, dict] = defaultdict(lambda: {
-        "ventas": 0, "compras": 0,
-        "ingresos": Decimal(0), "gastos": Decimal(0),
-        "ganancias": Decimal(0), "margenes": [],
-        "tickets": [],
-    })
-
-    for tx in txs:
-        tx_date: date = tx.fecha if isinstance(tx.fecha, date) else tx.fecha.date()
-        m = tx_date.month
-        vehiculo = vehiculos_map.get(tx.vehiculo_id)
-        precio = Decimal(str(tx.precio_acordado))
-        precio_compra = Decimal(str(vehiculo.precio_compra)) if vehiculo and vehiculo.precio_compra else None
-        ganancia = _calcular_ganancia(tx, precio_compra)
-
-        if tx.tipo == "venta":
-            meses_data[m]["ventas"] += 1
-            meses_data[m]["ingresos"] += precio
-            meses_data[m]["tickets"].append(precio)
-            if ganancia is not None:
-                meses_data[m]["ganancias"] += ganancia
-                if precio_compra and precio_compra > 0:
-                    meses_data[m]["margenes"].append(float(ganancia / precio_compra * 100))
-        elif tx.tipo == "compra":
-            meses_data[m]["compras"] += 1
-            meses_data[m]["gastos"] += precio
-
-    # Build response
-    meses_list: list[MesReporte] = []
-    for m in sorted(meses_data.keys()):
-        d = meses_data[m]
-        margenes = d["margenes"]
-        tickets = d["tickets"]
-        meses_list.append(MesReporte(
-            anio=anio,
-            mes=m,
-            ventas=d["ventas"],
-            compras=d["compras"],
-            ingresos_cop=d["ingresos"],
-            gastos_cop=d["gastos"],
-            ganancia_neta_cop=d["ganancias"],
-            margen_pct=sum(margenes) / len(margenes) if margenes else None,
-            ticket_promedio_cop=sum(tickets) / len(tickets) if tickets else None,
-        ))
-
-    total_ventas = sum(m.ventas for m in meses_list)
-    total_ingresos = sum(m.ingresos_cop for m in meses_list)
-    total_ganancia = sum(m.ganancia_neta_cop for m in meses_list)
-
-    return ReporteResponse(
-        periodo=f"{anio}" if not mes else f"{anio}-{mes:02d}",
-        meses=meses_list,
-        totales={
-            "ventas": total_ventas,
-            "ingresos_cop": total_ingresos,
-            "ganancia_neta_cop": total_ganancia,
-            "margen_promedio_pct": (
-                float(total_ganancia / total_ingresos * 100)
-                if total_ingresos > 0
-                else None
-            ),
-        },
+        ventas_12m=sum(m["ventas"] for m in meses.values()),
+        ingresos_12m=sum(m["ingresos"] for m in meses.values()),
+        ganancia_12m=sum(m["ganancia"] for m in meses.values()),
+        margen_promedio_pct=round(sum(margenes) / len(margenes), 1) if margenes else None,
+        ticket_promedio=sum(tickets) / len(tickets) if tickets else None,
+        dias_promedio_venta=round(sum(dias_venta) / len(dias_venta), 1) if dias_venta else None,
+        vehiculos_en_inventario=len(en_inventario),
+        valor_inventario_venta=sum(v.precio_venta or 0 for v in en_inventario),
+        capital_invertido=sum(v.precio_compra or 0 for v in en_inventario),
+        meses=[MesKPI(mes=k, **meses[k]) for k in meses_keys],
+        ventas_por_marca=dict(sorted(por_marca.items(), key=lambda kv: -kv[1])),
     )
 
 
 @router.get("", response_model=list[TransaccionOut], summary="Listar transacciones")
 async def listar_transacciones(
-    tipo: Optional[str] = Query(None, description="compra | venta | consignacion"),
+    tipo: Optional[str] = Query(None, description="compra | venta"),
     vehiculo_id: Optional[int] = Query(None),
     cliente_id: Optional[int] = Query(None),
-    fecha_desde: Optional[date] = Query(None),
-    fecha_hasta: Optional[date] = Query(None),
+    desde: Optional[date] = Query(None),
+    hasta: Optional[date] = Query(None),
     skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=500),
+    limit: int = Query(200, ge=1, le=1000),
     db: AsyncSession = Depends(get_db),
 ):
     conditions = []
@@ -375,119 +240,79 @@ async def listar_transacciones(
         conditions.append(Transaccion.vehiculo_id == vehiculo_id)
     if cliente_id:
         conditions.append(Transaccion.cliente_id == cliente_id)
-    if fecha_desde:
-        conditions.append(Transaccion.fecha >= fecha_desde)
-    if fecha_hasta:
-        conditions.append(Transaccion.fecha <= fecha_hasta)
+    if desde:
+        conditions.append(Transaccion.fecha >= datetime.combine(desde, time.min, tzinfo=timezone.utc))
+    if hasta:
+        conditions.append(Transaccion.fecha <= datetime.combine(hasta, time.max, tzinfo=timezone.utc))
 
     stmt = select(Transaccion)
     if conditions:
         stmt = stmt.where(and_(*conditions))
-    stmt = stmt.offset(skip).limit(limit).order_by(Transaccion.fecha.desc())
+    stmt = stmt.order_by(Transaccion.fecha.desc(), Transaccion.id.desc()).offset(skip).limit(limit)
+    txs = (await db.execute(stmt)).scalars().all()
+    if not txs:
+        return []
 
-    result = await db.execute(stmt)
-    txs: list[Transaccion] = result.scalars().all()
-
-    # Prefetch vehicles and clients
-    if txs:
-        v_ids = list({tx.vehiculo_id for tx in txs})
-        c_ids = list({tx.cliente_id for tx in txs if tx.cliente_id})
-
-        v_result = await db.execute(select(Vehiculo).where(Vehiculo.id.in_(v_ids)))
-        vehiculos_map: dict[int, Vehiculo] = {v.id: v for v in v_result.scalars().all()}
-
-        c_result = await db.execute(select(Cliente).where(Cliente.id.in_(c_ids)))
-        clientes_map: dict[int, Cliente] = {c.id: c for c in c_result.scalars().all()}
-    else:
-        vehiculos_map = {}
-        clientes_map = {}
-
-    return [
-        _enrich_tx(tx, vehiculos_map.get(tx.vehiculo_id), clientes_map.get(tx.cliente_id) if tx.cliente_id else None)
-        for tx in txs
-    ]
+    v_ids = {t.vehiculo_id for t in txs}
+    c_ids = {t.cliente_id for t in txs}
+    vehiculos = {v.id: v for v in (await db.execute(select(Vehiculo).where(Vehiculo.id.in_(v_ids)))).scalars().all()}
+    clientes = {c.id: c for c in (await db.execute(select(Cliente).where(Cliente.id.in_(c_ids)))).scalars().all()}
+    return [_to_out(t, vehiculos.get(t.vehiculo_id), clientes.get(t.cliente_id)) for t in txs]
 
 
-@router.get("/{transaccion_id}", response_model=TransaccionOut, summary="Obtener transacción por ID")
+@router.get("/{transaccion_id}", response_model=TransaccionOut, summary="Obtener transacción")
 async def obtener_transaccion(transaccion_id: int, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Transaccion).where(Transaccion.id == transaccion_id))
-    tx = result.scalar_one_or_none()
+    tx = await db.get(Transaccion, transaccion_id)
     if not tx:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Transacción no encontrada")
-
-    v_result = await db.execute(select(Vehiculo).where(Vehiculo.id == tx.vehiculo_id))
-    vehiculo = v_result.scalar_one_or_none()
-
-    c_result = await db.execute(select(Cliente).where(Cliente.id == tx.cliente_id)) if tx.cliente_id else None
-    cliente = (await c_result).scalar_one_or_none() if c_result else None
-
-    return _enrich_tx(tx, vehiculo, cliente)
+    return _to_out(tx, await db.get(Vehiculo, tx.vehiculo_id), await db.get(Cliente, tx.cliente_id))
 
 
-@router.post("", response_model=TransaccionOut, status_code=status.HTTP_201_CREATED, summary="Crear transacción")
+@router.post("", response_model=TransaccionOut, status_code=status.HTTP_201_CREATED, summary="Registrar compra o venta")
 async def crear_transaccion(payload: TransaccionCreate, db: AsyncSession = Depends(get_db)):
-    # Validate vehiculo exists
-    v_result = await db.execute(select(Vehiculo).where(Vehiculo.id == payload.vehiculo_id))
-    vehiculo = v_result.scalar_one_or_none()
+    vehiculo = await db.get(Vehiculo, payload.vehiculo_id)
     if not vehiculo:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vehículo no encontrado")
+    cliente = await db.get(Cliente, payload.cliente_id)
+    if not cliente:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Cliente no encontrado")
+    if payload.tipo == "venta" and vehiculo.estado == "vendido":
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Este vehículo ya está vendido")
 
-    # Validate cliente if provided
-    cliente = None
-    if payload.cliente_id:
-        c_result = await db.execute(select(Cliente).where(Cliente.id == payload.cliente_id))
-        cliente = c_result.scalar_one_or_none()
-        if not cliente:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Cliente no encontrado")
+    fecha = datetime.combine(payload.fecha, time(12, 0), tzinfo=timezone.utc)
+    tx = Transaccion(**payload.model_dump(exclude={"fecha"}), fecha=fecha)
 
-    tx = Transaccion(**payload.model_dump())
-    db.add(tx)
-
-    # Auto-update vehiculo estado based on tx type
+    # Keep the vehicle in sync with the transaction
     if payload.tipo == "venta":
+        # Purchase-side costs (our own traspaso, reconditioning) also reduce the profit
+        compras = (await db.execute(select(Transaccion).where(
+            Transaccion.vehiculo_id == vehiculo.id, Transaccion.tipo == "compra"
+        ))).scalars().all()
+        ganancia = _ganancia(tx, vehiculo)
+        tx.ganancia_neta = None if ganancia is None else ganancia - sum(_gastos(c) for c in compras)
         vehiculo.estado = "vendido"
-        vehiculo.fecha_venta = payload.fecha
-        vehiculo.precio_venta = payload.precio_acordado
-    elif payload.tipo == "compra":
-        vehiculo.estado = "disponible"
-        vehiculo.fecha_compra = payload.fecha
-        vehiculo.precio_compra = payload.precio_acordado
+        vehiculo.fecha_venta = fecha
+        vehiculo.precio_venta = payload.precio
+    else:
+        vehiculo.estado = "disponible" if vehiculo.estado == "vendido" else vehiculo.estado
+        vehiculo.fecha_compra = fecha
+        vehiculo.precio_compra = payload.precio
 
+    db.add(tx)
     await db.flush()
     await db.refresh(tx)
-    return _enrich_tx(tx, vehiculo, cliente)
+    return _to_out(tx, vehiculo, cliente)
 
 
-@router.put("/{transaccion_id}", response_model=TransaccionOut, summary="Actualizar transacción")
-async def actualizar_transaccion(
-    transaccion_id: int,
-    payload: TransaccionUpdate,
-    db: AsyncSession = Depends(get_db),
-):
-    result = await db.execute(select(Transaccion).where(Transaccion.id == transaccion_id))
-    tx = result.scalar_one_or_none()
-    if not tx:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Transacción no encontrada")
-
-    updates = payload.model_dump(exclude_unset=True)
-    for field, value in updates.items():
-        setattr(tx, field, value)
-
-    await db.flush()
-    await db.refresh(tx)
-
-    v_result = await db.execute(select(Vehiculo).where(Vehiculo.id == tx.vehiculo_id))
-    vehiculo = v_result.scalar_one_or_none()
-    c_result = await db.execute(select(Cliente).where(Cliente.id == tx.cliente_id)) if tx.cliente_id else None
-    cliente = (await c_result).scalar_one_or_none() if c_result else None
-
-    return _enrich_tx(tx, vehiculo, cliente)
-
-
-@router.delete("/{transaccion_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Eliminar transacción")
+@router.delete("/{transaccion_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Anular transacción")
 async def eliminar_transaccion(transaccion_id: int, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Transaccion).where(Transaccion.id == transaccion_id))
-    tx = result.scalar_one_or_none()
+    tx = await db.get(Transaccion, transaccion_id)
     if not tx:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Transacción no encontrada")
+    if tx.tipo == "venta":
+        # Undo the sale: the vehicle goes back to stock
+        vehiculo = await db.get(Vehiculo, tx.vehiculo_id)
+        if vehiculo and vehiculo.estado == "vendido":
+            vehiculo.estado = "disponible"
+            vehiculo.fecha_venta = None
     await db.delete(tx)

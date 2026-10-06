@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import {
-  Plus, Pencil, Trash2, Loader2, X, Upload, ImageOff, Search, ExternalLink, Car,
+  Plus, Pencil, Trash2, Loader2, X, Upload, ImageOff, Search, ExternalLink, Car, HandCoins,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import AdminShell from '@/components/AdminShell';
@@ -217,6 +217,11 @@ export default function InventarioPage() {
                         {v.estado !== 'vendido' && (
                           <Link href={`/catalogo/vehiculo?id=${v.id}`} target="_blank" className="btn-ghost p-2" title="Ver en catálogo">
                             <ExternalLink className="w-4 h-4" />
+                          </Link>
+                        )}
+                        {v.estado !== 'vendido' && (
+                          <Link href={`/admin/ventas?vehiculo=${v.id}`} className="btn-ghost p-2 hover:text-green-400" title="Registrar venta">
+                            <HandCoins className="w-4 h-4" />
                           </Link>
                         )}
                         <button onClick={() => setEditing(v)} className="btn-ghost p-2" title="Editar">
