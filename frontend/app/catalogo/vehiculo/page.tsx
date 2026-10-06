@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   ArrowLeft, MapPin, Gauge, Fuel, Settings2, Calendar, Palette,
@@ -14,9 +14,18 @@ import { formatCOP, formatNumber, type Vehicle } from '@/lib/data';
 import { fetchVehiculo } from '@/lib/api';
 import { whatsappUrl, telUrl } from '@/lib/negocio';
 
+// Static export: the vehicle id comes from the query string (/catalogo/vehiculo?id=13)
 export default function VehiculoDetallePage() {
-  const params = useParams();
-  const id = Number(params.id);
+  return (
+    <Suspense fallback={null}>
+      <VehiculoDetalle />
+    </Suspense>
+  );
+}
+
+function VehiculoDetalle() {
+  const searchParams = useSearchParams();
+  const id = Number(searchParams.get('id'));
 
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
   const [loading, setLoading] = useState(true);

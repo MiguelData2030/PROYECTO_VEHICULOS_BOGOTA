@@ -1,0 +1,60 @@
+# Render Blueprint — creates the whole app in one go:
+#   render.com → New → Blueprint → pick this GitHub repo.
+# Only the values marked `sync: false` are asked for (secrets / your data).
+services:
+  # ---------------------------------------------------------------- API
+  - type: web
+    name: autonegocio-api
+    runtime: python
+    plan: free
+    region: ohio
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.7
+      - key: DEBUG
+        value: "false"
+      # Supabase → Connect → Connection string → "Transaction pooler" (port 6543)
+      - key: DATABASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        value: https://ljudyjeievouaetykluo.supabase.co
+      # Supabase → Project Settings → API Keys → Secret keys (sb_secret_...)
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_BUCKET
+        value: fotos
+      - key: SECRET_KEY
+        generateValue: true
+      # Scraper runs inside the API every 6 h (kept awake by .github/workflows/keepalive.yml)
+      - key: SCRAPING_INTERVAL_MINUTES
+        value: "360"
+      - key: CORS_ORIGINS
+        value: https://autonegocio-web*.onrender.com
+      # Optional (AI agents)
+      - key: ANTHROPIC_API_KEY
+        sync: false
+
+  # ---------------------------------------------------------------- Web
+  - type: web
+    name: autonegocio-web
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: out
+    autoDeploy: true
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        value: https://autonegocio-api.onrender.com
+      # Your real business data, shown on the website
+      - key: NEXT_PUBLIC_WHATSAPP
+        sync: false
+      - key: NEXT_PUBLIC_EMAIL
+        sync: false
+      - key: NEXT_PUBLIC_TELEFONO
+        sync: false
+      - key: NEXT_PUBLIC_DIRECCION
+        value: Bogotá, Colombia

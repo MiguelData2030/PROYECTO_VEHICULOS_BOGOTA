@@ -215,7 +215,7 @@ export default function InventarioPage() {
                     <td className="py-3 px-4">
                       <div className="flex justify-end gap-1">
                         {v.estado !== 'vendido' && (
-                          <Link href={`/catalogo/${v.id}`} target="_blank" className="btn-ghost p-2" title="Ver en catálogo">
+                          <Link href={`/catalogo/vehiculo?id=${v.id}`} target="_blank" className="btn-ghost p-2" title="Ver en catálogo">
                             <ExternalLink className="w-4 h-4" />
                           </Link>
                         )}

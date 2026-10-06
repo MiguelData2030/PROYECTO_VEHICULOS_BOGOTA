@@ -251,7 +251,7 @@ export default function AdminDashboard() {
                     return (
                       <tr key={v.id} className="border-b border-border/50 hover:bg-surface-light transition-colors">
                         <td className="py-3 px-2">
-                          <Link href={`/catalogo/${v.id}`} className="hover:text-primary transition-colors">
+                          <Link href={`/catalogo/vehiculo?id=${v.id}`} className="hover:text-primary transition-colors">
                             <p className="text-white font-medium">{v.marca} {v.modelo}</p>
                             <p className="text-gray-500 text-xs">{v.año} · {formatNumber(v.kilometraje)} km</p>
                           </Link>

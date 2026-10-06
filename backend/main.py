@@ -4,6 +4,7 @@ Car buying/selling business in Bogota, Colombia.
 """
 
 import os
+import re
 from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI, Header, HTTPException, status
@@ -71,10 +72,17 @@ app = FastAPI(
 # ---------------------------------------------------------------------------
 # CORS — origins configurable via CORS_ORIGINS (comma-separated); "*" in dev
 # ---------------------------------------------------------------------------
-_cors_origins = [o.strip() for o in settings.CORS_ORIGINS.split(",") if o.strip()]
+# Entries with a wildcard inside (e.g. https://autonegocio-web*.onrender.com)
+# become a regex, in case the host adds a suffix to the service name.
+_cors_entries = [o.strip() for o in settings.CORS_ORIGINS.split(",") if o.strip()]
+_cors_origins = [o for o in _cors_entries if o == "*" or "*" not in o]
+_cors_regex = "|".join(
+    re.escape(o).replace(r"\*", "[a-z0-9-]*") for o in _cors_entries if o != "*" and "*" in o
+) or None
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_cors_origins,
+    allow_origin_regex=_cors_regex,
     allow_credentials="*" not in _cors_origins,
     allow_methods=["*"],
     allow_headers=["*"],

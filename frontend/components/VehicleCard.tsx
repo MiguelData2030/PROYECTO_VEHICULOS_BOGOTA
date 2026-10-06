@@ -10,7 +10,7 @@ interface VehicleCardProps {
 
 export default function VehicleCard({ vehicle }: VehicleCardProps) {
   return (
-    <Link href={`/catalogo/${vehicle.id}`} className="card group cursor-pointer">
+    <Link href={`/catalogo/vehiculo?id=${vehicle.id}`} className="card group cursor-pointer">
       {/* Image */}
       <div className="relative aspect-[16/10] bg-dark-50 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-t from-dark/80 via-transparent to-transparent z-10" />
