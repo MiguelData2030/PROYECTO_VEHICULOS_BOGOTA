@@ -1,10 +1,8 @@
 """
 One-time production setup against Supabase.
 
-Run from the project root with the production variables set:
+Fill `.env.prod` (git-ignored) and run from the project root:
 
-    DATABASE_URL=... SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... \
-    ADMIN_USERNAME=... ADMIN_EMAIL=... ADMIN_PASSWORD=... \
     python -m scripts.init_prod
 
 It is idempotent: running it again does nothing harmful.
@@ -18,12 +16,19 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import httpx
+from scripts import prod_env
 
-from backend.config.settings import settings
-from backend.models.database import Base, engine
-from backend.services import storage
-from scripts import create_admin
+prod_env.load()  # must run before importing backend settings
+_missing = prod_env.missing(["DATABASE_URL", "ADMIN_PASSWORD"])
+if _missing:
+    sys.exit(f"Faltan en .env.prod: {', '.join(_missing)}")
+
+import httpx  # noqa: E402
+
+from backend.config.settings import settings  # noqa: E402
+from backend.models.database import Base, engine  # noqa: E402
+from backend.services import storage  # noqa: E402
+from scripts import create_admin  # noqa: E402
 
 
 async def create_tables() -> None:

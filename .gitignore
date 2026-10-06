@@ -31,3 +31,7 @@ uploads/
 # OS
 .DS_Store
 Thumbs.db
+
+# Production secrets (filled locally, never committed)
+.env.prod
+.vercel

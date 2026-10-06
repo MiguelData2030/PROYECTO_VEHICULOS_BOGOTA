@@ -35,15 +35,12 @@ redespliegan solos en cada `git push` a `main`.
 
 ## 2. Inicializar la base de datos (una sola vez, desde tu PC)
 
-En la raíz del proyecto, en PowerShell:
+1. Llena el archivo `.env.prod` de la raíz (está en `.gitignore`, nunca se sube):
+   `DATABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` y `ADMIN_PASSWORD`.
+   `SECRET_KEY` y `CRON_SECRET` se generan solos.
+2. Ejecuta:
 
-```powershell
-$env:DATABASE_URL="<connection string del pooler>"
-$env:SUPABASE_URL="https://XXXX.supabase.co"
-$env:SUPABASE_SERVICE_ROLE_KEY="<service_role>"
-$env:ADMIN_USERNAME="miguel"
-$env:ADMIN_EMAIL="tu@correo.com"
-$env:ADMIN_PASSWORD="<una contraseña larga>"
+```bash
 python -m scripts.init_prod
 ```
 
@@ -54,7 +51,9 @@ Es seguro ejecutarlo varias veces.
 
 1. [vercel.com/new](https://vercel.com/new) → importa `PROYECTO_VEHICULOS_BOGOTA`.
 2. **Root Directory**: `./` (la raíz). Framework: **Other**.
-3. **Environment Variables** (ver `.env.example`):
+3. **Environment Variables**: con el proyecto enlazado (`vercel link` en la raíz),
+   `python -m scripts.vercel_secrets` sube los valores de `.env.prod` sin mostrarlos.
+   Además configura (ver `.env.example`):
 
 | Variable | Valor |
 |---|---|
