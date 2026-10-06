@@ -291,7 +291,8 @@ export async function deleteCliente(id: number): Promise<void> {
 
 export async function triggerScraping(): Promise<boolean> {
   try {
-    await api.post('/scraping/trigger');
+    // A full scan takes ~30-60 s (longer if the free API was asleep)
+    await api.post('/scraping/trigger', null, { timeout: 180000 });
     return true;
   } catch {
     return false;

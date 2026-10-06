@@ -205,16 +205,17 @@ class TuCarroScraper(BaseScraper):
         raw: dict[str, Any] = {"plataforma": PLATFORM}
 
         # --- URL ---
-        link = card.select_one("a.ui-search-item__group__element, a.ui-search-result__image__element, a[href*='tucarro.com.co']")
+        link = card.select_one("a.poly-component__title, a.ui-search-item__group__element, a.ui-search-result__image__element, a[href*='tucarro.com.co']")
         if not link:
             link = card.find("a", href=True)
         if link:
             href = link.get("href", "")
-            raw["url"] = href if href.startswith("http") else urljoin(BASE_URL, href)
+            raw["url"] = (href if href.startswith("http") else urljoin(BASE_URL, href)).split("#")[0]
 
         # --- Title → marca + modelo ---
         title_tag = (
-            card.select_one("h2.ui-search-item__title")
+            card.select_one("a.poly-component__title")  # 2025+ "poly-card" layout
+            or card.select_one("h2.ui-search-item__title")
             or card.select_one(".ui-search-item__title")
             or card.select_one("h2")
         )
@@ -223,7 +224,9 @@ class TuCarroScraper(BaseScraper):
             raw["titulo"] = title
             marca, modelo = self._split_title(title)
             raw["marca"] = marca
-            raw["modelo"] = modelo
+            # Titles look like "Arona 2020 1.6 Fr": keep the model name only so
+            # comparable cars match when estimating the market price.
+            raw["modelo"] = re.sub(r"\s+(19|20)\d{2}\b.*$", "", modelo or "").strip() or modelo
 
         # --- Price ---
         price_tag = (
@@ -242,7 +245,8 @@ class TuCarroScraper(BaseScraper):
 
         # --- Attributes on card (year, km, etc.) ---
         attr_rows = (
-            card.select("ul.ui-search-card-attributes__list li")
+            card.select("ul.poly-attributes_list li")
+            or card.select("ul.ui-search-card-attributes__list li")
             or card.select(".ui-search-item__group--attributes li")
             or card.select("[class*='ui-search-card-attributes'] li")
         )
@@ -252,7 +256,8 @@ class TuCarroScraper(BaseScraper):
 
         # --- Location ---
         location_tag = (
-            card.select_one(".ui-search-item__location-label")
+            card.select_one(".poly-component__location")
+            or card.select_one(".ui-search-item__location-label")
             or card.select_one("[class*='ui-search-item__location']")
             or card.select_one(".ui-search-item__group--location")
         )

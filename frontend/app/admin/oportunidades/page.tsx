@@ -36,7 +36,7 @@ export default function OportunidadesPage() {
   const [items, setItems] = useState<Oportunidad[]>([]);
   const [loading, setLoading] = useState(true);
   const [filtro, setFiltro] = useState('activas');
-  const [scoreMin, setScoreMin] = useState(50);
+  const [scoreMin, setScoreMin] = useState(60);
   const [scraping, setScraping] = useState(false);
 
   const load = async () => {
@@ -112,7 +112,7 @@ export default function OportunidadesPage() {
         <label className="ml-auto flex items-center gap-2 text-sm text-gray-400">
           Score mínimo
           <select value={scoreMin} onChange={(e) => setScoreMin(Number(e.target.value))} className="select-field py-1.5 w-24">
-            {[0, 50, 60, 75, 85].map((s) => <option key={s} value={s}>{s}</option>)}
+            {[0, 40, 50, 60, 70, 80].map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
         </label>
       </div>

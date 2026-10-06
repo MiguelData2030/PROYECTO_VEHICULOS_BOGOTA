@@ -232,10 +232,13 @@ class ScraperManager:
         color = (listing.get("color") or "").lower()
         ubicacion = (listing.get("ubicacion") or "").lower()
 
-        # --- Price discount vs market (max 40 points) ---
+        # --- Price discount vs market (max 45 points) — the main signal ---
+        # Business plan "green light" = 15%+ below market → ~34 pts; 20%+ → max.
+        # (Search-result cards carry no type/transmission/color, so the price
+        # signal has to weigh more for a good deal to reach the 60-80 range.)
         if market_price and precio and precio < market_price:
             discount_ratio = (market_price - precio) / market_price * 100
-            score += min(40.0, discount_ratio)
+            score += min(45.0, discount_ratio * 2.25)
 
         # --- Brand popularity (max 15 points) ---
         score += BRAND_SCORE.get(marca, 0)

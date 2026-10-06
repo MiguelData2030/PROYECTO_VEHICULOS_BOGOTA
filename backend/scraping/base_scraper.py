@@ -119,7 +119,7 @@ class BaseScraper(ABC):
             "User-Agent": self._random_user_agent(),
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
             "Accept-Language": "es-CO,es;q=0.9,en;q=0.8",
-            "Accept-Encoding": "gzip, deflate, br",
+            "Accept-Encoding": "gzip, deflate",  # no "br": brotli isn't installed → undecodable bytes
             "Connection": "keep-alive",
             "DNT": "1",
         }
