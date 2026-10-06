@@ -22,6 +22,7 @@ import httpx
 
 from backend.config.settings import settings
 from backend.models.database import Base, engine
+from backend.services import storage
 from scripts import create_admin
 
 
@@ -38,7 +39,7 @@ async def create_bucket() -> None:
         print("! SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY no definidas: se omite el bucket de fotos")
         return
     key = settings.SUPABASE_SERVICE_ROLE_KEY
-    headers = {"Authorization": f"Bearer {key}", "apikey": key}
+    headers = storage.auth_headers(key)
     base = settings.SUPABASE_URL.rstrip("/")
     async with httpx.AsyncClient(timeout=30) as client:
         r = await client.get(f"{base}/storage/v1/bucket/{settings.SUPABASE_BUCKET}", headers=headers)

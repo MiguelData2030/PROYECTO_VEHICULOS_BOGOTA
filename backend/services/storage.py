@@ -31,9 +31,21 @@ def _base() -> str:
     return settings.SUPABASE_URL.rstrip("/")
 
 
-def _headers() -> dict:
-    key = settings.SUPABASE_SERVICE_ROLE_KEY
+def auth_headers(key: str) -> dict:
+    """
+    Supabase auth headers for a server-side key.
+
+    New-style secret keys (sb_secret_...) are not JWTs: they go only in the
+    `apikey` header and the API gateway authorises the request with them.
+    Legacy service_role keys are JWTs and are also sent as a Bearer token.
+    """
+    if key.startswith("sb_"):
+        return {"apikey": key}
     return {"Authorization": f"Bearer {key}", "apikey": key}
+
+
+def _headers() -> dict:
+    return auth_headers(settings.SUPABASE_SERVICE_ROLE_KEY)
 
 
 def _public_prefix() -> str:
