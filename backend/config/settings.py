@@ -80,6 +80,11 @@ def _apply_supabase_integration(s: Settings) -> Settings:
     # On Vercel we are always in production
     if os.environ.get("VERCEL") and "DEBUG" not in os.environ:
         s.DEBUG = False
+    if not s.DEBUG and s.DATABASE_URL.startswith("sqlite"):
+        raise RuntimeError(
+            "DATABASE_URL no está configurada. En Render: servicio autonegocio-api → "
+            "Environment → DATABASE_URL = cadena 'Transaction pooler' de Supabase (puerto 6543)."
+        )
     return s
 
 
