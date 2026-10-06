@@ -25,6 +25,9 @@ from backend.api.mercado import router as mercado_router
 from backend.api.auth import router as auth_router
 from backend.api.agentes import router as agentes_router
 from backend.api.demo import router as demo_router
+from backend.api.crm import router as crm_router
+from backend.api.redes import router as redes_router
+from backend.api.publico import router as publico_router
 from backend.api.auth import require_admin
 
 
@@ -100,6 +103,9 @@ app.include_router(mercado_router, prefix="/mercado", dependencies=[Depends(requ
 app.include_router(auth_router, prefix="/auth", tags=["Auth"])
 app.include_router(agentes_router, prefix="/agentes", dependencies=[Depends(require_admin)], tags=["Agentes IA"])
 app.include_router(demo_router, prefix="/demo", dependencies=[Depends(require_admin)], tags=["Demo"])
+app.include_router(crm_router, prefix="/crm", dependencies=[Depends(require_admin)], tags=["CRM"])
+app.include_router(redes_router, prefix="/redes", dependencies=[Depends(require_admin)], tags=["Redes sociales"])
+app.include_router(publico_router, prefix="/publico", tags=["Público"])
 
 # ---------------------------------------------------------------------------
 # Static files — uploaded vehicle images

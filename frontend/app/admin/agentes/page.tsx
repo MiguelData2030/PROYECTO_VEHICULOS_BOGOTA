@@ -4,24 +4,31 @@ import { Suspense, useEffect, useState, type FormEvent } from 'react';
 import { useSearchParams } from 'next/navigation';
 import {
   Bot, Calculator, Crosshair, Megaphone, Loader2, Sparkles, Cpu, ExternalLink, Copy, Check,
-  ThumbsUp, ThumbsDown, Zap, ArrowRight,
+  ThumbsUp, ThumbsDown, Zap, ArrowRight, Landmark, Handshake, AlertTriangle, MessageCircleMore,
 } from 'lucide-react';
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
+} from 'recharts';
+import { canalInfo } from '@/lib/canales';
 import toast from 'react-hot-toast';
 import AdminShell from '@/components/AdminShell';
-import { formatCOP, formatNumber, marcas } from '@/lib/data';
+import { formatCOP, formatCOPCompact, formatNumber, marcas } from '@/lib/data';
 import {
   fetchAgentesEstado, valuarVehiculo, ejecutarCazador, generarMarketing, fetchInventario, updateVehiculo,
+  ejecutarFinanciero, ejecutarVentas, type AnalisisFinanciero, type AnalisisVentas,
   apiErrorMessage, TRANSMISIONES, COMBUSTIBLES, TIPOS_VEHICULO,
   type AgentesEstado, type Valuacion, type ValuacionInput, type Caceria, type OportunidadCazada,
   type TextosMarketing, type VehiculoAdmin, type VehiculoInput,
 } from '@/lib/api-admin';
 
-type Tab = 'valuador' | 'cazador' | 'marketing';
+type Tab = 'valuador' | 'cazador' | 'marketing' | 'financiero' | 'ventas';
 
 const TABS: { key: Tab; label: string; icon: typeof Bot; desc: string }[] = [
   { key: 'valuador', label: 'Valuador', icon: Calculator, desc: 'Cuánto vale un carro, cuánto pagar como máximo y en cuánto venderlo' },
   { key: 'cazador', label: 'Cazador', icon: Crosshair, desc: 'Las mejores oportunidades de compra del mercado, priorizadas' },
   { key: 'marketing', label: 'Marketing', icon: Megaphone, desc: 'Anuncio, descripción, post de Instagram y WhatsApp de un carro' },
+  { key: 'financiero', label: 'Financiero', icon: Landmark, desc: 'Flujo de caja, capital parado, rebajas y rentabilidad por marca' },
+  { key: 'ventas', label: 'Ventas', icon: Handshake, desc: 'A quién llamar hoy, qué decirle y qué carros ofrecerle' },
 ];
 
 const EMPTY_VAL: ValuacionInput = {
@@ -66,7 +73,7 @@ function Agentes() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-8">
         {TABS.map(({ key, label, icon: Icon, desc }) => (
           <button
             key={key}
@@ -85,6 +92,8 @@ function Agentes() {
       {tab === 'valuador' && <Valuador form={valForm} setForm={setValForm} autoRun={valAuto} />}
       {tab === 'cazador' && <Cazador onValuar={valuarOportunidad} />}
       {tab === 'marketing' && <Marketing vehiculoInicial={Number(params.get('vehiculo')) || null} />}
+      {tab === 'financiero' && <Financiero />}
+      {tab === 'ventas' && <Ventas />}
     </AdminShell>
   );
 }
@@ -434,6 +443,251 @@ function Texto({ titulo, texto, extra }: { titulo: string; texto: string; extra?
 }
 
 // ---------------------------------------------------------------------------
+// Financiero
+// ---------------------------------------------------------------------------
+
+function Financiero() {
+  const [loading, setLoading] = useState(false);
+  const [r, setR] = useState<AnalisisFinanciero | null>(null);
+
+  const run = async () => {
+    setLoading(true);
+    try {
+      setR(await ejecutarFinanciero());
+    } catch (e) {
+      toast.error(apiErrorMessage(e, 'No se pudo completar el análisis'));
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => { run(); }, []);
+
+  if (loading || !r) {
+    return <div className="card p-10 flex justify-center"><Loader2 className="w-8 h-8 text-primary animate-spin" /></div>;
+  }
+
+  const flujo = r.flujo_caja.map((m) => ({
+    mes: m.mes.slice(2).replace('-', '/'),
+    Ingresos: Math.round(m.ingresos / 1e6),
+    Egresos: Math.round(m.egresos / 1e6),
+    'Flujo neto': Math.round(m.flujo_neto / 1e6),
+  }));
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <Box label="Ganancia proyectada (trimestre)" value={formatCOPCompact(r.proyeccion.ganancia_trimestre)} sub={`${r.proyeccion.ventas_mes} ventas/mes`} accent="text-green-400" />
+        <Box label="Capital en inventario" value={formatCOPCompact(r.capital_invertido)} />
+        <Box label="Costo del capital parado" value={`${formatCOPCompact(r.costo_capital_mensual)}/mes`} accent="text-yellow-400" />
+        <Box label="Margen neto promedio" value={r.margen_promedio_pct != null ? `${r.margen_promedio_pct}%` : '-'} sub="Últimos 12 meses" accent="text-primary" />
+      </div>
+
+      <div className="card p-5">
+        <p className="text-white font-semibold flex items-center gap-2 mb-2">
+          {r.analisis_ia ? <Sparkles className="w-4 h-4 text-green-400" /> : <Cpu className="w-4 h-4 text-primary" />}
+          Diagnóstico del Agente Financiero
+        </p>
+        <p className="text-sm text-gray-300 whitespace-pre-wrap leading-relaxed">{r.analisis}</p>
+        <p className="text-xs text-gray-600 mt-3">{r.supuestos}</p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="card p-5">
+          <p className="text-white font-semibold mb-4">Flujo de caja (millones COP)</p>
+          <ResponsiveContainer width="100%" height={240}>
+            <BarChart data={flujo}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#1a1a1a" />
+              <XAxis dataKey="mes" tick={{ fill: '#9ca3af', fontSize: 12 }} />
+              <YAxis tick={{ fill: '#9ca3af', fontSize: 12 }} />
+              <Tooltip contentStyle={{ background: '#1a1a1a', border: '1px solid #333', borderRadius: 8 }} labelStyle={{ color: '#fff' }} />
+              <Legend wrapperStyle={{ fontSize: 12 }} />
+              <Bar dataKey="Ingresos" fill="#4ade80" radius={[3, 3, 0, 0]} />
+              <Bar dataKey="Egresos" fill="#f87171" radius={[3, 3, 0, 0]} />
+              <Bar dataKey="Flujo neto" fill="#d4a843" radius={[3, 3, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+        <div className="card p-5">
+          <p className="text-white font-semibold mb-4">Antigüedad del inventario</p>
+          <div className="space-y-3">
+            {r.antiguedad_stock.map((t) => {
+              const pct = r.capital_invertido ? (t.capital / r.capital_invertido) * 100 : 0;
+              const color = t.tramo === '0-30' ? 'bg-green-500' : t.tramo === '31-60' ? 'bg-yellow-500' : 'bg-red-500';
+              return (
+                <div key={t.tramo}>
+                  <div className="flex justify-between text-xs text-gray-300 mb-1">
+                    <span>{t.tramo} días · {t.vehiculos} carros</span><span>{formatCOP(t.capital)}</span>
+                  </div>
+                  <div className="h-2 bg-dark rounded-full"><div className={`h-2 rounded-full ${color}`} style={{ width: `${pct}%` }} /></div>
+                </div>
+              );
+            })}
+          </div>
+          {r.alertas.length > 0 && (
+            <div className="mt-5 space-y-1">
+              {r.alertas.map((a) => <p key={a} className="text-xs text-yellow-300 flex gap-1"><AlertTriangle className="w-3 h-3 mt-0.5 flex-shrink-0" />{a}</p>)}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {r.rebajas_sugeridas.length > 0 && (
+        <div className="card p-5 overflow-x-auto">
+          <p className="text-white font-semibold mb-3">Rebajas sugeridas para rotar inventario</p>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-gray-500 text-xs uppercase border-b border-border">
+                <th className="text-left py-2">Vehículo</th><th className="text-center">Días</th><th className="text-right">Precio actual</th>
+                <th className="text-right">Sugerido</th><th className="text-right">Margen queda</th><th className="text-right">Capital parado costó</th>
+              </tr>
+            </thead>
+            <tbody>
+              {r.rebajas_sugeridas.map((x) => (
+                <tr key={x.vehiculo_id} className="border-b border-border/50">
+                  <td className="py-2 text-white">{x.vehiculo}</td>
+                  <td className="text-center text-red-400">{x.dias}</td>
+                  <td className="text-right text-gray-400 line-through">{formatCOP(x.precio_actual)}</td>
+                  <td className="text-right text-primary font-medium">{formatCOP(x.precio_sugerido)} <span className="text-gray-500 text-xs">(-{x.rebaja_pct}%)</span></td>
+                  <td className="text-right text-gray-200">{x.margen_resultante_pct}%</td>
+                  <td className="text-right text-yellow-400">{formatCOP(x.costo_capital_acumulado)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {[['Rentabilidad por marca', r.rentabilidad_marca], ['Rentabilidad por tipo', r.rentabilidad_segmento]].map(([titulo, filas]) => (
+          <div key={titulo as string} className="card p-5 overflow-x-auto">
+            <p className="text-white font-semibold mb-1">{titulo as string}</p>
+            <p className="text-gray-500 text-xs mb-3">Rendimiento mensual = ganancia sobre lo invertido por cada mes que el carro estuvo en stock.</p>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-gray-500 text-xs uppercase border-b border-border">
+                  <th className="text-left py-2"></th><th className="text-center">Ventas</th><th className="text-right">Margen</th>
+                  <th className="text-right">Días</th><th className="text-right">Rend. mensual</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(filas as AnalisisFinanciero['rentabilidad_marca']).map((m, i) => (
+                  <tr key={m.grupo} className="border-b border-border/50">
+                    <td className="py-2 text-white">{i === 0 ? '🏆 ' : ''}{m.grupo}</td>
+                    <td className="text-center text-gray-400">{m.ventas}</td>
+                    <td className="text-right text-gray-300">{m.margen_pct}%</td>
+                    <td className="text-right text-gray-400">{m.dias_promedio}</td>
+                    <td className={`text-right font-medium ${m.roi_mensual_pct >= 20 ? 'text-green-400' : m.roi_mensual_pct >= 12 ? 'text-primary' : 'text-yellow-400'}`}>{m.roi_mensual_pct}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Ventas
+// ---------------------------------------------------------------------------
+
+function Ventas() {
+  const [loading, setLoading] = useState(false);
+  const [r, setR] = useState<AnalisisVentas | null>(null);
+
+  const run = async () => {
+    setLoading(true);
+    try {
+      setR(await ejecutarVentas());
+    } catch (e) {
+      toast.error(apiErrorMessage(e, 'No se pudo completar el análisis'));
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => { run(); }, []);
+
+  if (loading || !r) {
+    return <div className="card p-10 flex justify-center"><Loader2 className="w-8 h-8 text-primary animate-spin" /></div>;
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <Box label="Negocios abiertos" value={String(r.abiertos)} sub={`${formatCOPCompact(r.valor_ponderado)} ponderados`} />
+        <Box label="Acciones vencidas" value={String(r.vencidos)} accent={r.vencidos ? 'text-red-400' : 'text-white'} />
+        <Box label="Leads de redes sin responder" value={String(r.nuevos_redes)} accent={r.nuevos_redes ? 'text-yellow-400' : 'text-white'} sub="Responder en menos de 1 hora" />
+        <Box label="Sin asesor asignado" value={String(r.sin_responsable)} />
+      </div>
+
+      <div className="card p-5">
+        <p className="text-white font-semibold flex items-center gap-2 mb-2">
+          {r.analisis_ia ? <Sparkles className="w-4 h-4 text-green-400" /> : <Cpu className="w-4 h-4 text-primary" />}
+          Plan del día
+        </p>
+        <p className="text-sm text-gray-300 whitespace-pre-wrap leading-relaxed">{r.analisis}</p>
+      </div>
+
+      <div className="space-y-3">
+        {r.prioridades.map((p, i) => {
+          const c = canalInfo(p.canal);
+          return (
+            <div key={p.seguimiento_id} className="card p-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="flex items-start gap-3">
+                  <span className="w-8 h-8 rounded-full bg-primary/15 text-primary text-sm font-bold flex items-center justify-center flex-shrink-0">{i + 1}</span>
+                  <div>
+                    <p className="text-white font-semibold">{p.cliente} <span className={`ml-1 text-[10px] px-1.5 py-0.5 rounded ${c.cls}`}>{c.label}</span></p>
+                    <p className="text-gray-500 text-xs">
+                      {p.tipo === 'venta' ? 'Nos quiere vender su carro' : p.vehiculo ?? 'Comprador'} · etapa {p.etapa}{p.valor ? ` · ${formatCOP(p.valor)}` : ''} · {p.responsable ?? 'sin asesor'}
+                    </p>
+                    <p className="text-yellow-300/90 text-xs mt-1">Por qué ahora: {p.razon}</p>
+                  </div>
+                </div>
+                <span className="text-xs text-gray-500">Prioridad {p.puntaje}</span>
+              </div>
+              <p className="text-sm text-gray-200 mt-3"><b className="text-primary">Acción:</b> {p.accion}</p>
+              <div className="mt-2 bg-dark rounded-lg p-3 text-sm text-gray-300 flex gap-2 items-start">
+                <MessageCircleMore className="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" />
+                <span className="flex-1">{p.mensaje}</span>
+                <CopyBtn texto={p.mensaje} />
+              </div>
+              {p.alternativas.length > 0 && (
+                <div className="mt-3">
+                  <p className="text-gray-500 text-xs mb-2">Alternativas en su presupuesto:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {p.alternativas.map((a) => (
+                      <div key={a.vehiculo_id} className="flex items-center gap-2 bg-dark rounded-lg pr-3 overflow-hidden">
+                        {a.foto && <img src={a.foto} alt="" className="w-12 h-9 object-cover" />}
+                        <span className="text-xs text-gray-300">{a.vehiculo} · <span className="text-primary">{formatCOP(a.precio)}</span></span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+        {r.prioridades.length === 0 && <div className="card p-10 text-center text-gray-500">No hay negocios abiertos en el CRM.</div>}
+      </div>
+    </div>
+  );
+}
+
+function CopyBtn({ texto }: { texto: string }) {
+  const [ok, setOk] = useState(false);
+  return (
+    <button
+      onClick={async () => { try { await navigator.clipboard.writeText(texto); setOk(true); setTimeout(() => setOk(false), 1500); } catch { toast.error('No se pudo copiar'); } }}
+      className="btn-ghost text-xs px-2 py-1 flex items-center gap-1"
+    >
+      {ok ? <Check className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3" />}
+    </button>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Small UI helpers
 // ---------------------------------------------------------------------------
 
@@ -465,7 +719,7 @@ function Box({ label, value, sub, accent = 'text-white' }: { label: string; valu
   return (
     <div className="card p-3">
       <p className="text-gray-500 text-xs">{label}</p>
-      <p className={`text-lg font-bold ${accent}`}>{value}</p>
+      <p className={`text-lg font-bold break-words ${accent}`}>{value}</p>
       {sub && <p className="text-gray-500 text-xs mt-0.5">{sub}</p>}
     </div>
   );

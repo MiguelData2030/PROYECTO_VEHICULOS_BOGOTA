@@ -490,6 +490,200 @@ export async function generarMarketing(vehiculoId: number): Promise<TextosMarket
   return data;
 }
 
+// --- CRM ---
+
+export const ETAPAS_CRM = ['nuevo', 'contactado', 'cita', 'negociacion', 'ganado', 'perdido'] as const;
+export type EtapaCRM = (typeof ETAPAS_CRM)[number];
+export const CANALES_CRM = ['instagram', 'facebook', 'tiktok', 'whatsapp', 'web', 'tucarro', 'referido', 'vitrina'] as const;
+export const TIPOS_INTERACCION = ['llamada', 'whatsapp', 'mensaje_red', 'email', 'visita', 'test_drive', 'cotizacion', 'nota'] as const;
+
+export interface SeguimientoCRM {
+  id: number;
+  tipo: 'compra' | 'venta';
+  etapa: EtapaCRM;
+  canal: string;
+  valor_estimado: number | null;
+  probabilidad: number | null;
+  proxima_accion: string | null;
+  fecha_proxima: string | null;
+  vencida: boolean;
+  responsable: string | null;
+  motivo_perdida: string | null;
+  notas: string | null;
+  created_at: string;
+  updated_at: string;
+  n_interacciones: number;
+  ultima_interaccion: string | null;
+  cliente: { id: number; nombre: string; telefono: string | null; email: string | null; presupuesto_max: number | null } | null;
+  vehiculo: { id: number; nombre: string; precio: number | null; foto: string | null; estado: string } | null;
+  interacciones?: { id: number; tipo: string; resumen: string; fecha: string }[];
+}
+
+export interface ResumenCRM {
+  por_etapa: Record<EtapaCRM, { cantidad: number; valor: number }>;
+  abiertos: number;
+  valor_pipeline: number;
+  valor_ponderado: number;
+  conversion_pct: number | null;
+  acciones_vencidas: number;
+  acciones_hoy: number;
+  por_canal: Record<string, { leads: number; ganados: number; perdidos: number; valor_ganado: number; conversion_pct: number | null }>;
+  motivos_perdida: Record<string, number>;
+}
+
+export async function fetchPipeline(): Promise<SeguimientoCRM[]> {
+  const { data } = await api.get('/crm', { params: { incluir_cerrados_dias: 30 } });
+  return data;
+}
+
+export async function fetchResumenCRM(): Promise<ResumenCRM> {
+  const { data } = await api.get('/crm/resumen');
+  return data;
+}
+
+export async function fetchSeguimiento(id: number): Promise<SeguimientoCRM> {
+  const { data } = await api.get(`/crm/${id}`);
+  return data;
+}
+
+export async function updateSeguimiento(id: number, payload: Partial<{
+  etapa: EtapaCRM; proxima_accion: string | null; fecha_proxima: string | null; responsable: string | null; motivo_perdida: string | null;
+}>): Promise<SeguimientoCRM> {
+  const { data } = await api.put(`/crm/${id}`, payload);
+  return data;
+}
+
+export async function addInteraccion(id: number, tipo: string, resumen: string): Promise<SeguimientoCRM> {
+  const { data } = await api.post(`/crm/${id}/interacciones`, { tipo, resumen });
+  return data;
+}
+
+export async function createSeguimiento(payload: {
+  cliente_nuevo: { nombre: string; telefono?: string | null; email?: string | null };
+  vehiculo_id?: number | null; tipo: 'compra' | 'venta'; canal: string; proxima_accion?: string; responsable?: string | null;
+}): Promise<SeguimientoCRM> {
+  const { data } = await api.post('/crm', payload);
+  return data;
+}
+
+// --- Redes sociales ---
+
+export interface RedResumen {
+  red: string;
+  seguidores: number;
+  crecimiento: number;
+  crecimiento_pct: number | null;
+  alcance: number;
+  interacciones: number;
+  engagement_pct: number | null;
+  mensajes: number;
+  leads: number;
+  inversion: number;
+  costo_por_lead: number | null;
+  leads_crm: number;
+  ventas: number;
+  valor_ventas: number;
+}
+
+export interface PublicacionRed {
+  id: number;
+  red: string;
+  tipo: string;
+  titulo: string;
+  fecha: string;
+  alcance: number;
+  me_gusta: number;
+  comentarios: number;
+  compartidos: number;
+  guardados: number;
+  mensajes: number;
+  leads: number;
+  engagement_pct: number | null;
+  imagen: string | null;
+  vehiculo: string | null;
+  vehiculo_estado: string | null;
+}
+
+export interface ResumenRedes {
+  dias: number;
+  totales: {
+    seguidores: number; crecimiento: number; alcance: number; leads: number; inversion: number;
+    costo_por_lead: number | null; ventas_desde_redes: number; valor_ventas_redes: number;
+  };
+  redes: RedResumen[];
+  serie: ({ fecha: string; leads: number; alcance: number } & Record<string, number | string>)[];
+  top_publicaciones: PublicacionRed[];
+  rendimiento_formato: { formato: string; publicaciones: number; alcance: number; leads: number; leads_por_publicacion: number }[];
+}
+
+export async function fetchRedes(dias = 90): Promise<ResumenRedes> {
+  const { data } = await api.get('/redes/resumen', { params: { dias } });
+  return data;
+}
+
+// --- Agentes Financiero y de Ventas ---
+
+export interface Rentabilidad {
+  grupo: string; ventas: number; ganancia: number; margen_pct: number; dias_promedio: number; roi_mensual_pct: number;
+}
+
+export interface AnalisisFinanciero {
+  flujo_caja: { mes: string; ingresos: number; egresos: number; ganancia: number; ventas: number; compras: number; flujo_neto: number }[];
+  capital_invertido: number;
+  costo_capital_mensual: number;
+  antiguedad_stock: { tramo: string; vehiculos: number; capital: number }[];
+  rebajas_sugeridas: {
+    vehiculo_id: number; vehiculo: string; dias: number; precio_actual: number; precio_sugerido: number;
+    rebaja_pct: number; margen_resultante_pct: number; costo_capital_acumulado: number;
+  }[];
+  rentabilidad_marca: Rentabilidad[];
+  rentabilidad_segmento: Rentabilidad[];
+  proyeccion: { ventas_mes: number; ganancia_mes: number; ganancia_trimestre: number };
+  margen_promedio_pct: number | null;
+  alertas: string[];
+  supuestos: string;
+  analisis: string;
+  analisis_ia: boolean;
+}
+
+export async function ejecutarFinanciero(): Promise<AnalisisFinanciero> {
+  const { data } = await api.post('/agentes/financiero', null, { timeout: 90000 });
+  return data;
+}
+
+export interface PrioridadVenta {
+  seguimiento_id: number;
+  cliente: string;
+  telefono: string | null;
+  tipo: 'compra' | 'venta';
+  etapa: string;
+  canal: string;
+  vehiculo: string | null;
+  valor: number | null;
+  responsable: string | null;
+  puntaje: number;
+  razon: string;
+  accion: string;
+  mensaje: string;
+  alternativas: { vehiculo_id: number; vehiculo: string; precio: number; foto: string | null }[];
+}
+
+export interface AnalisisVentas {
+  abiertos: number;
+  vencidos: number;
+  sin_responsable: number;
+  nuevos_redes: number;
+  valor_ponderado: number;
+  prioridades: PrioridadVenta[];
+  analisis: string;
+  analisis_ia: boolean;
+}
+
+export async function ejecutarVentas(): Promise<AnalisisVentas> {
+  const { data } = await api.post('/agentes/ventas', null, { timeout: 90000 });
+  return data;
+}
+
 // --- Scraping trigger ---
 
 export async function triggerScraping(): Promise<boolean> {

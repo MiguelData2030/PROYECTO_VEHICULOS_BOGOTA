@@ -406,7 +406,7 @@ export default function AdminDashboard() {
             <p className="text-gray-400 text-sm">
               {demo?.cargado
                 ? `Cargados: ${demo.vehiculos} vehículos, ${demo.clientes} clientes y ${demo.transacciones} transacciones simuladas. Se ven en la web pública.`
-                : 'Simula un año de operación (unos 95 vehículos con fotos, ventas, clientes y leads) para probar todo el sistema. Se borran con un clic.'}
+                : 'Simula un año de operación: unos 95 vehículos con fotos, ventas, clientes, CRM con seguimientos y métricas de redes sociales. Se borra con un clic.'}
             </p>
           </div>
         </div>

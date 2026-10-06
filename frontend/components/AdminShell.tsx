@@ -3,13 +3,15 @@
 import { useEffect, type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { BarChart3, Car, Target, Users, LogOut, Loader2, Receipt, Bot } from 'lucide-react';
+import { BarChart3, Car, Target, Users, LogOut, Loader2, Receipt, Bot, KanbanSquare, Share2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 
 const tabs = [
   { href: '/admin', label: 'Dashboard', icon: BarChart3 },
   { href: '/admin/inventario', label: 'Inventario', icon: Car },
   { href: '/admin/ventas', label: 'Ventas', icon: Receipt },
+  { href: '/admin/crm', label: 'CRM', icon: KanbanSquare },
+  { href: '/admin/redes', label: 'Redes', icon: Share2 },
   { href: '/admin/oportunidades', label: 'Oportunidades', icon: Target },
   { href: '/admin/leads', label: 'Leads', icon: Users },
   { href: '/admin/agentes', label: 'Agentes IA', icon: Bot },

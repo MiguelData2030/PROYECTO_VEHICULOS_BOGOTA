@@ -52,7 +52,9 @@ class ClienteBase(BaseModel):
 
 
 class ClienteCreate(ClienteBase):
-    pass
+    # Set by the public website forms (web_vender | web_contacto): the lead is
+    # also added to the CRM pipeline. Not stored on the client.
+    origen: Optional[str] = Field(None, max_length=30)
 
 
 class ClienteUpdate(BaseModel):
@@ -180,6 +182,9 @@ async def crear_cliente(payload: ClienteCreate, db: AsyncSession = Depends(get_d
                 existing.email = payload.email
             if existing.tipo != payload.tipo and existing.tipo != "ambos":
                 existing.tipo = "ambos"
+            if payload.origen:
+                from backend.api.crm import crear_seguimiento_web
+                await crear_seguimiento_web(db, existing, payload.origen)
             await db.flush()
             await db.refresh(existing)
             return existing
@@ -193,9 +198,13 @@ async def crear_cliente(payload: ClienteCreate, db: AsyncSession = Depends(get_d
                 detail=f"Ya existe un cliente con la cédula {payload.cedula}",
             )
 
-    c = Cliente(**payload.model_dump())
+    c = Cliente(**payload.model_dump(exclude={"origen"}))
     db.add(c)
     await db.flush()
+    if payload.origen:
+        from backend.api.crm import crear_seguimiento_web
+        await crear_seguimiento_web(db, c, payload.origen)
+        await db.flush()
     await db.refresh(c)
     return c
 

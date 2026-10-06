@@ -42,7 +42,7 @@ async def estado():
     return {
         "ia_activa": ia_disponible(),
         "modelo": settings.CLAUDE_MODEL if ia_disponible() else None,
-        "agentes": ["valuador", "cazador", "marketing"],
+        "agentes": ["valuador", "cazador", "marketing", "financiero", "ventas"],
     }
 
 
@@ -75,3 +75,17 @@ async def marketing(vehiculo_id: int, db: AsyncSession = Depends(get_db)):
     if not vehiculo:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vehículo no encontrado")
     return await AgenteMarketing().redactar(vehiculo)
+
+
+@router.post("/financiero", summary="Agente Financiero: flujo de caja, capital, rebajas y rentabilidad")
+async def financiero():
+    from backend.agents.financiero import AgenteFinanciero
+
+    return await AgenteFinanciero().analizar()
+
+
+@router.post("/ventas", summary="Agente de Ventas: prioridades del CRM y mensajes sugeridos")
+async def ventas(limite: int = Query(15, ge=1, le=50)):
+    from backend.agents.ventas import AgenteVentas
+
+    return await AgenteVentas().analizar(limite=limite)

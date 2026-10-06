@@ -10,6 +10,7 @@ from .transaccion import Transaccion
 from .precio_mercado import PrecioMercado
 from .oportunidad import Oportunidad
 from .usuario import Usuario
+from .crm import Interaccion, Publicacion, RedMetrica, Seguimiento
 
 __all__ = [
     # Database core
@@ -24,4 +25,8 @@ __all__ = [
     "PrecioMercado",
     "Oportunidad",
     "Usuario",
+    "Seguimiento",
+    "Interaccion",
+    "RedMetrica",
+    "Publicacion",
 ]

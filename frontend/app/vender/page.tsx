@@ -76,6 +76,7 @@ export default function VenderPage() {
           telefono: form.telefono,
           email: form.email.trim() || null,
           tipo: 'vendedor',
+          origen: 'web_vender',
           vehiculos_interes: [{
             marca: form.marca,
             modelo: form.modelo,

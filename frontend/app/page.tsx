@@ -100,6 +100,20 @@ export default function HomePage() {
         <SearchBar />
       </section>
 
+      {/* Instant valuation CTA */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16">
+        <Link href="/cotiza/" className="block rounded-2xl border border-primary/30 bg-gradient-to-r from-primary/15 via-surface to-surface p-8 hover:border-primary/60 transition-colors">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div>
+              <p className="text-primary text-sm font-semibold uppercase tracking-wider mb-2">Nuevo · Cotizador con IA</p>
+              <h2 className="text-2xl sm:text-3xl font-display font-bold text-white">¿Cuánto vale tu carro? Descúbrelo en 30 segundos</h2>
+              <p className="text-gray-400 mt-2">Comparamos con anuncios reales de Bogotá y te damos una oferta de compra de contado.</p>
+            </div>
+            <span className="btn-primary whitespace-nowrap self-start md:self-center">Cotizar mi carro →</span>
+          </div>
+        </Link>
+      </section>
+
       {/* Featured Vehicles */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="flex items-end justify-between mb-10">

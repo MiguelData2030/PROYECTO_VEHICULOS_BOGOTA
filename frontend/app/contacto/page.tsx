@@ -76,6 +76,7 @@ export default function ContactoPage() {
           telefono: form.telefono || null,
           email: form.email.trim() || null,
           tipo: form.asunto === 'Vender vehículo' ? 'vendedor' : 'comprador',
+          origen: 'web_contacto',
           notas: `[Contacto web] ${form.asunto || 'Sin asunto'}: ${form.mensaje}`,
         }),
       });

@@ -13,8 +13,10 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.demo.generator import DEMO_EMAIL_DOMAIN, DEMO_TAG, build_demo
-from backend.models import Cliente, Transaccion, Vehiculo
+from backend.demo.generator import DEMO_EMAIL_DOMAIN, DEMO_TAG, build_demo_full
+from backend.models import (
+    Cliente, Interaccion, Publicacion, RedMetrica, Seguimiento, Transaccion, Vehiculo,
+)
 from backend.models.database import get_db
 
 router = APIRouter()
@@ -40,7 +42,10 @@ async def estado_demo(db: AsyncSession = Depends(get_db)):
         tx = (await db.execute(
             select(func.count(Transaccion.id)).where(Transaccion.vehiculo_id.in_(v_ids))
         )).scalar_one()
-    return {"cargado": bool(v_ids), "vehiculos": len(v_ids), "clientes": len(c_ids), "transacciones": tx}
+    segs = (await db.execute(select(func.count(Seguimiento.id)).where(Seguimiento.demo.is_(True)))).scalar_one()
+    pubs = (await db.execute(select(func.count(Publicacion.id)).where(Publicacion.demo.is_(True)))).scalar_one()
+    return {"cargado": bool(v_ids), "vehiculos": len(v_ids), "clientes": len(c_ids), "transacciones": tx,
+            "seguimientos": segs, "publicaciones": pubs}
 
 
 @router.post("", status_code=status.HTTP_201_CREATED, summary="Cargar un año simulado de operación")
@@ -49,7 +54,8 @@ async def cargar_demo(db: AsyncSession = Depends(get_db)):
     if v_ids:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Los datos de demostración ya están cargados")
 
-    clientes, vehiculos = build_demo()
+    data = build_demo_full()
+    clientes, vehiculos = data["clientes"], data["vehiculos"]
 
     cli_rows: dict[str, Cliente] = {}
     for c in clientes:
@@ -65,6 +71,7 @@ async def cargar_demo(db: AsyncSession = Depends(get_db)):
     await db.flush()
 
     n_tx = 0
+    veh_rows: dict[str, Vehiculo] = {}
     for v in vehiculos:
         datos = dict(v.datos)
         venta = v.venta
@@ -77,6 +84,7 @@ async def cargar_demo(db: AsyncSession = Depends(get_db)):
         row.created_at = _dt(v.fecha_compra)
         db.add(row)
         await db.flush()
+        veh_rows[v.ref] = row
 
         db.add(Transaccion(
             vehiculo_id=row.id, cliente_id=cli_rows[v.vendedor_ref].id, tipo="compra",
@@ -96,14 +104,40 @@ async def cargar_demo(db: AsyncSession = Depends(get_db)):
             ))
             n_tx += 1
 
+    # CRM pipeline with its interaction history
+    for sg in data["seguimientos"]:
+        seg = Seguimiento(
+            cliente_id=cli_rows[sg.cliente_ref].id,
+            vehiculo_id=veh_rows[sg.vehiculo_ref].id if sg.vehiculo_ref else None,
+            tipo=sg.tipo, etapa=sg.etapa, canal=sg.canal, valor_estimado=sg.valor_estimado,
+            probabilidad=sg.probabilidad, proxima_accion=sg.proxima_accion, fecha_proxima=sg.fecha_proxima,
+            responsable=sg.responsable, motivo_perdida=sg.motivo_perdida, notas=sg.notas, demo=True,
+        )
+        seg.created_at = sg.creado
+        seg.updated_at = max((i[0] for i in sg.interacciones), default=sg.creado)
+        seg.interacciones = [Interaccion(tipo=t, resumen=r, fecha=f, demo=True) for f, t, r in sg.interacciones]
+        db.add(seg)
+
+    # Social networks
+    for m in data["metricas"]:
+        db.add(RedMetrica(**m, demo=True))
+    for p in data["publicaciones"]:
+        ref = p.pop("vehiculo_ref", None)
+        db.add(Publicacion(**p, vehiculo_id=veh_rows[ref].id if ref in veh_rows else None, demo=True))
+
     await db.flush()
-    return {"vehiculos": len(vehiculos), "clientes": len(clientes), "transacciones": n_tx}
+    return {"vehiculos": len(vehiculos), "clientes": len(clientes), "transacciones": n_tx,
+            "seguimientos": len(data["seguimientos"]), "publicaciones": len(data["publicaciones"])}
 
 
 @router.delete("", summary="Borrar todos los datos de demostración")
 async def borrar_demo(db: AsyncSession = Depends(get_db)):
     v_ids, c_ids = await _demo_ids(db)
-    # Transactions first (FKs), then vehicles and clients
+    # CRM and social rows first, then transactions (FKs), vehicles and clients
+    await db.execute(delete(Interaccion).where(Interaccion.demo.is_(True)))
+    await db.execute(delete(Seguimiento).where(Seguimiento.demo.is_(True)))
+    await db.execute(delete(Publicacion).where(Publicacion.demo.is_(True)))
+    await db.execute(delete(RedMetrica).where(RedMetrica.demo.is_(True)))
     conds = []
     if v_ids:
         conds.append(Transaccion.vehiculo_id.in_(v_ids))

@@ -9,6 +9,7 @@ const navLinks = [
   { href: '/', label: 'Inicio' },
   { href: '/catalogo', label: 'Catálogo' },
   { href: '/vender', label: 'Vender' },
+  { href: '/cotiza', label: 'Cotiza tu carro' },
   { href: '/nosotros', label: 'Nosotros' },
   { href: '/contacto', label: 'Contacto' },
 ];
@@ -37,7 +38,7 @@ export default function Navbar() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                className={`px-3 lg:px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200 ${
                   pathname === link.href
                     ? 'text-primary bg-primary/10'
                     : 'text-gray-300 hover:text-white hover:bg-surface-light'

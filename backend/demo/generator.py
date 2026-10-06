@@ -360,3 +360,16 @@ class _Builder:
 def build_demo(today: Optional[date] = None) -> tuple[list[DemoCliente], list[DemoVehiculo]]:
     b = _Builder(today or date.today()).build()
     return b.clientes, b.vehiculos
+
+
+def build_demo_full(today: Optional[date] = None) -> dict:
+    """Clients, vehicles and sales plus the CRM pipeline and social media data."""
+    from .crm_demo import construir_crm, construir_redes
+
+    b = _Builder(today or date.today()).build()
+    seguimientos = construir_crm(b)            # may add clients (lost / active leads)
+    metricas, publicaciones = construir_redes(b)
+    return {
+        "clientes": b.clientes, "vehiculos": b.vehiculos, "seguimientos": seguimientos,
+        "metricas": metricas, "publicaciones": publicaciones,
+    }
