@@ -3,7 +3,7 @@
 import { useEffect, type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { BarChart3, Car, Target, Users, LogOut, Loader2, Receipt } from 'lucide-react';
+import { BarChart3, Car, Target, Users, LogOut, Loader2, Receipt, Bot } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 
 const tabs = [
@@ -12,6 +12,7 @@ const tabs = [
   { href: '/admin/ventas', label: 'Ventas', icon: Receipt },
   { href: '/admin/oportunidades', label: 'Oportunidades', icon: Target },
   { href: '/admin/leads', label: 'Leads', icon: Users },
+  { href: '/admin/agentes', label: 'Agentes IA', icon: Bot },
 ];
 
 /**

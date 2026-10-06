@@ -378,6 +378,118 @@ export async function deleteCliente(id: number): Promise<void> {
   await api.delete(`/clientes/${id}`);
 }
 
+// --- Agentes IA ---
+
+export interface AgentesEstado {
+  ia_activa: boolean;
+  modelo: string | null;
+}
+
+export async function fetchAgentesEstado(): Promise<AgentesEstado | null> {
+  try {
+    const { data } = await api.get('/agentes/estado');
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+export interface ValuacionInput {
+  marca: string;
+  modelo: string;
+  año: number;
+  kilometraje: number;
+  transmision: string;
+  combustible: string;
+  color: string;
+  tipo_vehiculo: string;
+  estado_mecanico: string;
+  num_dueños: number;
+  precio_pedido: number | null;
+  url_anuncio?: string | null;
+}
+
+export interface Comparable {
+  titulo: string;
+  año: number;
+  kilometraje: number | null;
+  precio: number;
+  ubicacion: string | null;
+  plataforma: string;
+  url: string;
+}
+
+export interface Valuacion {
+  valor_mercado: number | null;
+  rango_mercado: [number | null, number | null];
+  precio_venta_sugerido: number | null;
+  precio_compra_ideal: number | null;
+  precio_compra_maximo: number | null;
+  costos_estimados: number | null;
+  margen_esperado_pct: number | null;
+  dias_estimados_venta: number | null;
+  liquidez: string;
+  semaforo: 'verde' | 'amarillo' | 'rojo' | null;
+  veredicto: string | null;
+  factores_positivos: string[];
+  factores_negativos: string[];
+  comparables: Comparable[];
+  historial: { ventas: number; precio_promedio: number | null; dias_promedio: number | null; margen_promedio_pct: number | null };
+  metodo: string;
+  analisis: string;
+  analisis_ia: boolean;
+}
+
+export async function valuarVehiculo(payload: ValuacionInput): Promise<Valuacion> {
+  const { data } = await api.post('/agentes/valuar', payload, { timeout: 90000 });
+  return data;
+}
+
+export interface OportunidadCazada {
+  id: number;
+  titulo: string;
+  kilometraje: number | null;
+  ubicacion: string | null;
+  precio: number;
+  precio_mercado: number | null;
+  descuento_pct: number | null;
+  ganancia_potencial: number | null;
+  margen_potencial_pct: number | null;
+  score: number;
+  estado: string;
+  url: string;
+  plataforma: string;
+}
+
+export interface Caceria {
+  escaneados: number | null;
+  total_mercado: number;
+  ultima_actualizacion: string | null;
+  oportunidades: OportunidadCazada[];
+  resumen: string;
+  analisis_ia: boolean;
+}
+
+export async function ejecutarCazador(params: {
+  escanear: boolean; marca?: string; precio_max?: number; score_min: number;
+}): Promise<Caceria> {
+  const { data } = await api.post('/agentes/cazar', null, { params, timeout: 240000 });
+  return data;
+}
+
+export interface TextosMarketing {
+  titulo: string;
+  descripcion: string;
+  instagram: string;
+  whatsapp: string;
+  analisis_ia: boolean;
+}
+
+export async function generarMarketing(vehiculoId: number): Promise<TextosMarketing> {
+  const { data } = await api.post(`/agentes/marketing/${vehiculoId}`, null, { timeout: 90000 });
+  return data;
+}
+
 // --- Scraping trigger ---
 
 export async function triggerScraping(): Promise<boolean> {

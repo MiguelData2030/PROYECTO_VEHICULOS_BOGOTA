@@ -43,7 +43,7 @@ class Settings(BaseSettings):
 
     # Claude AI
     ANTHROPIC_API_KEY: Optional[str] = None
-    CLAUDE_MODEL: str = "claude-sonnet-4-20250514"
+    CLAUDE_MODEL: str = "claude-opus-5-5"
 
     # Business Rules
     MIN_MARGIN_PERCENT: float = 10.0
