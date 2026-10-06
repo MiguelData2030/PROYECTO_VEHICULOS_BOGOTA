@@ -9,7 +9,7 @@ Database:
 
 import os
 import uuid
-from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
+from urllib.parse import urlencode, urlsplit, urlunsplit
 
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase
@@ -31,7 +31,9 @@ def _build_engine_args(url: str) -> tuple[str, dict]:
 
     # asyncpg does not understand libpq's ?sslmode=...; Supabase always needs TLS.
     parts = urlsplit(url)
-    query = [(k, v) for k, v in parse_qsl(parts.query) if k not in ("sslmode", "pgbouncer")]
+    # Drop libpq/Supabase-specific params (sslmode, pgbouncer, supa, ...): asyncpg
+    # would treat them as server settings and fail. TLS is set via connect_args.
+    query: list[tuple[str, str]] = []
     # SQLAlchemy-level cache of prepared statements (dialect option, set via URL)
     query.append(("prepared_statement_cache_size", "0"))
     url = urlunsplit(parts._replace(query=urlencode(query)))
@@ -71,8 +73,24 @@ class Base(DeclarativeBase):
     pass
 
 
+_tables_ready = False
+
+
+async def ensure_tables() -> None:
+    """Create missing tables once per process (idempotent, cheap after the first call)."""
+    global _tables_ready
+    if _tables_ready:
+        return
+    import backend.models  # noqa: F401  (register all models)
+
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    _tables_ready = True
+
+
 async def get_db() -> AsyncSession:
     """FastAPI dependency that yields an async DB session."""
+    await ensure_tables()
     async with AsyncSessionLocal() as session:
         try:
             yield session

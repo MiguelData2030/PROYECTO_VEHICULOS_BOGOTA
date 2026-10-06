@@ -142,7 +142,10 @@ async def health():
 )
 async def trigger_scraping():
     """Trigger a full scraping scan manually (outside the scheduled interval)."""
+    from backend.models.database import ensure_tables
     from backend.scraping.scraper_manager import ScraperManager
+
+    await ensure_tables()
 
     try:
         manager = ScraperManager()

@@ -1,5 +1,7 @@
 from pydantic_settings import BaseSettings
 from typing import Optional
+import hashlib
+import hmac
 import os
 
 
@@ -57,4 +59,28 @@ class Settings(BaseSettings):
         env_file = ".env"
 
 
-settings = Settings()
+def _apply_supabase_integration(s: Settings) -> Settings:
+    """
+    Use the variables injected by the Supabase ↔ Vercel integration, so no
+    secret has to be copied by hand:
+      POSTGRES_URL           → DATABASE_URL
+      SUPABASE_SECRET_KEY    → SUPABASE_SERVICE_ROLE_KEY (newer integration name)
+      SUPABASE_JWT_SECRET    → derives a stable SECRET_KEY for our own JWTs
+    Explicitly set variables always win.
+    """
+    if not os.environ.get("DATABASE_URL") and os.environ.get("POSTGRES_URL"):
+        s.DATABASE_URL = os.environ["POSTGRES_URL"]
+    if not s.SUPABASE_SERVICE_ROLE_KEY and os.environ.get("SUPABASE_SECRET_KEY"):
+        s.SUPABASE_SERVICE_ROLE_KEY = os.environ["SUPABASE_SECRET_KEY"]
+    if not s.SUPABASE_URL and os.environ.get("NEXT_PUBLIC_SUPABASE_URL"):
+        s.SUPABASE_URL = os.environ["NEXT_PUBLIC_SUPABASE_URL"]
+    jwt_secret = os.environ.get("SUPABASE_JWT_SECRET")
+    if s.SECRET_KEY == DEFAULT_SECRET_KEY and jwt_secret:
+        s.SECRET_KEY = hmac.new(jwt_secret.encode(), b"autonegocio-api-jwt", hashlib.sha256).hexdigest()
+    # On Vercel we are always in production
+    if os.environ.get("VERCEL") and "DEBUG" not in os.environ:
+        s.DEBUG = False
+    return s
+
+
+settings = _apply_supabase_integration(Settings())
