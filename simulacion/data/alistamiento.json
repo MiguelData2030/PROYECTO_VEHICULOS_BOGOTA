@@ -1,0 +1,425 @@
+[
+  {
+    "id": "A01",
+    "vehiculo": "Mazda 2 Sedán 2022",
+    "kilometraje": 73000,
+    "liquidez": "alta",
+    "precio_compra": 50900000.0,
+    "precio_venta": 62400000,
+    "presupuesto_alistamiento": 1840000.0,
+    "dia_compra": 0,
+    "tareas": [
+      {
+        "tarea": "mecanica",
+        "dias": 3,
+        "costo": 980000.0
+      },
+      {
+        "tarea": "llantas_alineacion",
+        "dias": 1,
+        "costo": 1040000.0
+      },
+      {
+        "tarea": "lavado_detallado",
+        "dias": 1,
+        "costo": 380000.0
+      },
+      {
+        "tarea": "fotos_publicacion",
+        "dias": 1,
+        "costo": 0.0
+      }
+    ]
+  },
+  {
+    "id": "A02",
+    "vehiculo": "Toyota Corolla Cross 2022",
+    "kilometraje": 38000,
+    "liquidez": "alta",
+    "precio_compra": 99900000.0,
+    "precio_venta": 119900000,
+    "presupuesto_alistamiento": 2930000.0,
+    "dia_compra": 0,
+    "tareas": [
+      {
+        "tarea": "mecanica",
+        "dias": 2,
+        "costo": 1120000.0
+      },
+      {
+        "tarea": "lavado_detallado",
+        "dias": 1,
+        "costo": 250000.0
+      },
+      {
+        "tarea": "fotos_publicacion",
+        "dias": 1,
+        "costo": 0.0
+      }
+    ]
+  },
+  {
+    "id": "A03",
+    "vehiculo": "Mazda CX-5 2022",
+    "kilometraje": 35000,
+    "liquidez": "alta",
+    "precio_compra": 116600000.0,
+    "precio_venta": 139900000,
+    "presupuesto_alistamiento": 3310000.0,
+    "dia_compra": 0,
+    "tareas": [
+      {
+        "tarea": "lavado_detallado",
+        "dias": 1,
+        "costo": 360000.0
+      },
+      {
+        "tarea": "fotos_publicacion",
+        "dias": 1,
+        "costo": 0.0
+      }
+    ]
+  },
+  {
+    "id": "A04",
+    "vehiculo": "Kia Rio 2020",
+    "kilometraje": 106500,
+    "liquidez": "media",
+    "precio_compra": 37200000.0,
+    "precio_venta": 45900000,
+    "presupuesto_alistamiento": 1520000.0,
+    "dia_compra": 1,
+    "tareas": [
+      {
+        "tarea": "mecanica",
+        "dias": 2,
+        "costo": 1010000.0
+      },
+      {
+        "tarea": "lavado_detallado",
+        "dias": 1,
+        "costo": 340000.0
+      },
+      {
+        "tarea": "fotos_publicacion",
+        "dias": 1,
+        "costo": 0.0
+      }
+    ]
+  },
+  {
+    "id": "A05",
+    "vehiculo": "Toyota Fortuner 2020",
+    "kilometraje": 55500,
+    "liquidez": "media",
+    "precio_compra": 145200000.0,
+    "precio_venta": 175900000,
+    "presupuesto_alistamiento": 3990000.0,
+    "dia_compra": 1,
+    "tareas": [
+      {
+        "tarea": "latoneria_pintura",
+        "dias": 3,
+        "costo": 1480000.0
+      },
+      {
+        "tarea": "llantas_alineacion",
+        "dias": 1,
+        "costo": 1330000.0
+      },
+      {
+        "tarea": "lavado_detallado",
+        "dias": 1,
+        "costo": 260000.0
+      },
+      {
+        "tarea": "fotos_publicacion",
+        "dias": 1,
+        "costo": 0.0
+      }
+    ]
+  },
+  {
+    "id": "A06",
+    "vehiculo": "Kia Picanto 2022",
+    "kilometraje": 52000,
+    "liquidez": "alta",
+    "precio_compra": 34200000.0,
+    "precio_venta": 41900000,
+    "presupuesto_alistamiento": 1450000.0,
+    "dia_compra": 1,
+    "tareas": [
+      {
+        "tarea": "latoneria_pintura",
+        "dias": 3,
+        "costo": 1860000.0
+      },
+      {
+        "tarea": "llantas_alineacion",
+        "dias": 1,
+        "costo": 1400000.0
+      },
+      {
+        "tarea": "lavado_detallado",
+        "dias": 1,
+        "costo": 250000.0
+      },
+      {
+        "tarea": "fotos_publicacion",
+        "dias": 1,
+        "costo": 0.0
+      }
+    ]
+  },
+  {
+    "id": "A07",
+    "vehiculo": "Mazda CX-5 2022",
+    "kilometraje": 35000,
+    "liquidez": "alta",
+    "precio_compra": 118800000.0,
+    "precio_venta": 139900000,
+    "presupuesto_alistamiento": 3310000.0,
+    "dia_compra": 2,
+    "tareas": [
+      {
+        "tarea": "mecanica",
+        "dias": 3,
+        "costo": 770000.0
+      },
+      {
+        "tarea": "lavado_detallado",
+        "dias": 1,
+        "costo": 250000.0
+      },
+      {
+        "tarea": "fotos_publicacion",
+        "dias": 1,
+        "costo": 0.0
+      }
+    ]
+  },
+  {
+    "id": "A08",
+    "vehiculo": "Nissan Kicks 2021",
+    "kilometraje": 47000,
+    "liquidez": "media",
+    "precio_compra": 61500000.0,
+    "precio_venta": 72900000,
+    "presupuesto_alistamiento": 2040000.0,
+    "dia_compra": 2,
+    "tareas": [
+      {
+        "tarea": "llantas_alineacion",
+        "dias": 1,
+        "costo": 1460000.0
+      },
+      {
+        "tarea": "lavado_detallado",
+        "dias": 1,
+        "costo": 360000.0
+      },
+      {
+        "tarea": "fotos_publicacion",
+        "dias": 1,
+        "costo": 0.0
+      }
+    ]
+  },
+  {
+    "id": "A09",
+    "vehiculo": "Mazda CX-30 2023",
+    "kilometraje": 21000,
+    "liquidez": "alta",
+    "precio_compra": 103000000.0,
+    "precio_venta": 121500000,
+    "presupuesto_alistamiento": 2960000.0,
+    "dia_compra": 2,
+    "tareas": [
+      {
+        "tarea": "mecanica",
+        "dias": 2,
+        "costo": 1080000.0
+      },
+      {
+        "tarea": "latoneria_pintura",
+        "dias": 3,
+        "costo": 1360000.0
+      },
+      {
+        "tarea": "lavado_detallado",
+        "dias": 1,
+        "costo": 320000.0
+      },
+      {
+        "tarea": "fotos_publicacion",
+        "dias": 1,
+        "costo": 0.0
+      }
+    ]
+  },
+  {
+    "id": "A10",
+    "vehiculo": "Kia Rio 2020",
+    "kilometraje": 106500,
+    "liquidez": "media",
+    "precio_compra": 39300000.0,
+    "precio_venta": 45900000,
+    "presupuesto_alistamiento": 1520000.0,
+    "dia_compra": 3,
+    "tareas": [
+      {
+        "tarea": "mecanica",
+        "dias": 2,
+        "costo": 1070000.0
+      },
+      {
+        "tarea": "llantas_alineacion",
+        "dias": 1,
+        "costo": 1210000.0
+      },
+      {
+        "tarea": "lavado_detallado",
+        "dias": 1,
+        "costo": 270000.0
+      },
+      {
+        "tarea": "fotos_publicacion",
+        "dias": 1,
+        "costo": 0.0
+      }
+    ]
+  },
+  {
+    "id": "A11",
+    "vehiculo": "Mazda CX-5 2022",
+    "kilometraje": 35000,
+    "liquidez": "alta",
+    "precio_compra": 118800000.0,
+    "precio_venta": 139900000,
+    "presupuesto_alistamiento": 3310000.0,
+    "dia_compra": 3,
+    "tareas": [
+      {
+        "tarea": "latoneria_pintura",
+        "dias": 3,
+        "costo": 1170000.0
+      },
+      {
+        "tarea": "llantas_alineacion",
+        "dias": 1,
+        "costo": 940000.0
+      },
+      {
+        "tarea": "lavado_detallado",
+        "dias": 1,
+        "costo": 370000.0
+      },
+      {
+        "tarea": "fotos_publicacion",
+        "dias": 1,
+        "costo": 0.0
+      }
+    ]
+  },
+  {
+    "id": "A12",
+    "vehiculo": "Renault Logan 2019",
+    "kilometraje": 91000,
+    "liquidez": "alta",
+    "precio_compra": 27300000.0,
+    "precio_venta": 34900000,
+    "presupuesto_alistamiento": 1310000.0,
+    "dia_compra": 3,
+    "tareas": [
+      {
+        "tarea": "mecanica",
+        "dias": 2,
+        "costo": 980000.0
+      },
+      {
+        "tarea": "latoneria_pintura",
+        "dias": 3,
+        "costo": 1220000.0
+      },
+      {
+        "tarea": "llantas_alineacion",
+        "dias": 1,
+        "costo": 1520000.0
+      },
+      {
+        "tarea": "lavado_detallado",
+        "dias": 1,
+        "costo": 360000.0
+      },
+      {
+        "tarea": "fotos_publicacion",
+        "dias": 1,
+        "costo": 0.0
+      }
+    ]
+  },
+  {
+    "id": "A13",
+    "vehiculo": "Kia Sportage 2021",
+    "kilometraje": 58000,
+    "liquidez": "media",
+    "precio_compra": 82300000.0,
+    "precio_venta": 98500000,
+    "presupuesto_alistamiento": 2520000.0,
+    "dia_compra": 4,
+    "tareas": [
+      {
+        "tarea": "mecanica",
+        "dias": 2,
+        "costo": 1090000.0
+      },
+      {
+        "tarea": "latoneria_pintura",
+        "dias": 3,
+        "costo": 1390000.0
+      },
+      {
+        "tarea": "lavado_detallado",
+        "dias": 1,
+        "costo": 320000.0
+      },
+      {
+        "tarea": "fotos_publicacion",
+        "dias": 1,
+        "costo": 0.0
+      }
+    ]
+  },
+  {
+    "id": "A14",
+    "vehiculo": "Kia Rio 2020",
+    "kilometraje": 106500,
+    "liquidez": "media",
+    "precio_compra": 35900000.0,
+    "precio_venta": 45900000,
+    "presupuesto_alistamiento": 1520000.0,
+    "dia_compra": 4,
+    "tareas": [
+      {
+        "tarea": "mecanica",
+        "dias": 2,
+        "costo": 1180000.0
+      },
+      {
+        "tarea": "latoneria_pintura",
+        "dias": 3,
+        "costo": 1230000.0
+      },
+      {
+        "tarea": "lavado_detallado",
+        "dias": 1,
+        "costo": 340000.0
+      },
+      {
+        "tarea": "fotos_publicacion",
+        "dias": 1,
+        "costo": 0.0
+      }
+    ]
+  }
+]

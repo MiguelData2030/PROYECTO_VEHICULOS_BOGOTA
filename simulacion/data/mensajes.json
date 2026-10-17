@@ -1,0 +1,322 @@
+[
+  {
+    "id": "M25",
+    "canal": "whatsapp",
+    "cliente": "Laura Torres",
+    "hora": "07:02",
+    "texto": "¿El Toyota que publicaron en Instagram todavía está disponible? ¿Precio?",
+    "intencion_real": "disponibilidad"
+  },
+  {
+    "id": "M27",
+    "canal": "web",
+    "cliente": "Sebastián Castro",
+    "hora": "07:31",
+    "texto": "Compré un carro con ustedes y el aire acondicionado no funciona, necesito que me respondan",
+    "intencion_real": "queja"
+  },
+  {
+    "id": "M18",
+    "canal": "facebook",
+    "cliente": "Óscar Pérez",
+    "hora": "08:11",
+    "texto": "Necesito vender mi carro rápido, me pagan de contado?",
+    "intencion_real": "vender"
+  },
+  {
+    "id": "M14",
+    "canal": "tiktok",
+    "cliente": "Andrés Rodríguez",
+    "hora": "08:22",
+    "texto": "Puedo ir mañana a hacer test drive? a qué hora abren",
+    "intencion_real": "cita"
+  },
+  {
+    "id": "M17",
+    "canal": "web",
+    "cliente": "Sara Suárez",
+    "hora": "08:56",
+    "texto": "Compré un carro con ustedes y el aire acondicionado no funciona, necesito que me respondan",
+    "intencion_real": "queja"
+  },
+  {
+    "id": "M11",
+    "canal": "facebook",
+    "cliente": "Juliana Rojas",
+    "hora": "09:29",
+    "texto": "Buenas, necesito un carro automático para la familia, presupuesto 60 millones",
+    "intencion_real": "comprar"
+  },
+  {
+    "id": "M24",
+    "canal": "web",
+    "cliente": "Carolina Gómez",
+    "hora": "09:57",
+    "texto": "Compré un carro con ustedes y el aire acondicionado no funciona, necesito que me respondan",
+    "intencion_real": "queja"
+  },
+  {
+    "id": "M32",
+    "canal": "tiktok",
+    "cliente": "Andrés Ramírez",
+    "hora": "10:03",
+    "texto": "Compré un carro con ustedes y el aire acondicionado no funciona, necesito que me respondan",
+    "intencion_real": "queja"
+  },
+  {
+    "id": "M08",
+    "canal": "whatsapp",
+    "cliente": "Julián Ramírez",
+    "hora": "10:27",
+    "texto": "¿Dónde quedan? Quiero ir a ver carros el sábado",
+    "intencion_real": "cita"
+  },
+  {
+    "id": "M33",
+    "canal": "facebook",
+    "cliente": "Laura Rodríguez",
+    "hora": "10:45",
+    "texto": "Cuánto quedaría la cuota mensual del Toyota si doy el 30% de inicial?",
+    "intencion_real": "financiacion"
+  },
+  {
+    "id": "M15",
+    "canal": "whatsapp",
+    "cliente": "Mariana Castro",
+    "hora": "10:53",
+    "texto": "Cuánto quedaría la cuota mensual del Kia si doy el 30% de inicial?",
+    "intencion_real": "financiacion"
+  },
+  {
+    "id": "M05",
+    "canal": "facebook",
+    "cliente": "Mateo Moreno",
+    "hora": "11:13",
+    "texto": "Hola, vi el Kia en TuCarro, ¿sigue disponible?",
+    "intencion_real": "disponibilidad"
+  },
+  {
+    "id": "M35",
+    "canal": "whatsapp",
+    "cliente": "Laura Martínez",
+    "hora": "11:13",
+    "texto": "Necesito vender mi carro rápido, me pagan de contado?",
+    "intencion_real": "vender"
+  },
+  {
+    "id": "M39",
+    "canal": "web",
+    "cliente": "Sebastián Moreno",
+    "hora": "11:41",
+    "texto": "Buenas tardes, ustedes compran carros? Tengo un Toyota con 80.000 km",
+    "intencion_real": "vender"
+  },
+  {
+    "id": "M30",
+    "canal": "facebook",
+    "cliente": "Mariana Gómez",
+    "hora": "12:38",
+    "texto": "Hola, quiero vender mi Kia 2019, ¿cuánto me dan?",
+    "intencion_real": "vender"
+  },
+  {
+    "id": "M09",
+    "canal": "instagram",
+    "cliente": "Juliana Vargas",
+    "hora": "12:41",
+    "texto": "Hola, quiero vender mi Renault 2019, ¿cuánto me dan?",
+    "intencion_real": "vender"
+  },
+  {
+    "id": "M26",
+    "canal": "facebook",
+    "cliente": "Carolina Ramírez",
+    "hora": "12:45",
+    "texto": "Quiero comprar un Renault usado, ¿tienen disponibles?",
+    "intencion_real": "comprar"
+  },
+  {
+    "id": "M02",
+    "canal": "whatsapp",
+    "cliente": "Andrés Torres",
+    "hora": "13:02",
+    "texto": "Quiero comprar un Renault usado, ¿tienen disponibles?",
+    "intencion_real": "comprar"
+  },
+  {
+    "id": "M37",
+    "canal": "instagram",
+    "cliente": "Juliana Moreno",
+    "hora": "14:05",
+    "texto": "¿Financian? Gano 6 millones al mes y quiero un carro",
+    "intencion_real": "financiacion"
+  },
+  {
+    "id": "M21",
+    "canal": "web",
+    "cliente": "Daniela Rojas",
+    "hora": "14:24",
+    "texto": "Hola, vi el Chevrolet en TuCarro, ¿sigue disponible?",
+    "intencion_real": "disponibilidad"
+  },
+  {
+    "id": "M04",
+    "canal": "tiktok",
+    "cliente": "Santiago Gómez",
+    "hora": "14:51",
+    "texto": "Cuánto quedaría la cuota mensual del Chevrolet si doy el 30% de inicial?",
+    "intencion_real": "financiacion"
+  },
+  {
+    "id": "M31",
+    "canal": "instagram",
+    "cliente": "Alejandro Martínez",
+    "hora": "15:10",
+    "texto": "Buenas tardes, ustedes compran carros? Tengo un Renault con 80.000 km",
+    "intencion_real": "vender"
+  },
+  {
+    "id": "M29",
+    "canal": "tiktok",
+    "cliente": "Lina Rodríguez",
+    "hora": "15:29",
+    "texto": "Llevo 3 días esperando los papeles del traspaso, muy mal servicio",
+    "intencion_real": "queja"
+  },
+  {
+    "id": "M36",
+    "canal": "whatsapp",
+    "cliente": "Óscar Pérez",
+    "hora": "15:40",
+    "texto": "Hola, busco una camioneta Kia de hasta 100 millones, ¿qué tienen?",
+    "intencion_real": "comprar"
+  },
+  {
+    "id": "M22",
+    "canal": "tiktok",
+    "cliente": "Julián Rojas",
+    "hora": "15:52",
+    "texto": "Buenas, necesito un carro automático para la familia, presupuesto 80 millones",
+    "intencion_real": "comprar"
+  },
+  {
+    "id": "M23",
+    "canal": "web",
+    "cliente": "Camila Martínez",
+    "hora": "15:59",
+    "texto": "Hola! Estoy buscando sedán modelo 2021 en adelante, tengo 45 millones de contado, lo necesito esta semana",
+    "intencion_real": "comprar"
+  },
+  {
+    "id": "M28",
+    "canal": "whatsapp",
+    "cliente": "Alejandro Suárez",
+    "hora": "16:24",
+    "texto": "¿Financian? Gano 4 millones al mes y quiero un carro",
+    "intencion_real": "financiacion"
+  },
+  {
+    "id": "M03",
+    "canal": "facebook",
+    "cliente": "Paula Vargas",
+    "hora": "16:30",
+    "texto": "Buenas tardes, ustedes compran carros? Tengo un Renault con 80.000 km",
+    "intencion_real": "vender"
+  },
+  {
+    "id": "M40",
+    "canal": "whatsapp",
+    "cliente": "Lina García",
+    "hora": "16:55",
+    "texto": "Buenas tardes, ustedes compran carros? Tengo un Chevrolet con 80.000 km",
+    "intencion_real": "vender"
+  },
+  {
+    "id": "M38",
+    "canal": "web",
+    "cliente": "Juan Ortiz",
+    "hora": "17:39",
+    "texto": "¿Financian? Gano 9 millones al mes y quiero un carro",
+    "intencion_real": "financiacion"
+  },
+  {
+    "id": "M13",
+    "canal": "web",
+    "cliente": "Juan Ortiz",
+    "hora": "17:47",
+    "texto": "Hola, busco una SUV Kia de hasta 130 millones, ¿qué tienen?",
+    "intencion_real": "comprar"
+  },
+  {
+    "id": "M19",
+    "canal": "whatsapp",
+    "cliente": "Juliana García",
+    "hora": "17:57",
+    "texto": "Necesito vender mi carro rápido, me pagan de contado?",
+    "intencion_real": "vender"
+  },
+  {
+    "id": "M01",
+    "canal": "tiktok",
+    "cliente": "Felipe Pérez",
+    "hora": "18:19",
+    "texto": "Hola, busco una SUV Mazda de hasta 80 millones, ¿qué tienen?",
+    "intencion_real": "comprar"
+  },
+  {
+    "id": "M16",
+    "canal": "facebook",
+    "cliente": "Laura Castro",
+    "hora": "18:27",
+    "texto": "Buenas tardes, ustedes compran carros? Tengo un Toyota con 80.000 km",
+    "intencion_real": "vender"
+  },
+  {
+    "id": "M07",
+    "canal": "instagram",
+    "cliente": "Juan Pérez",
+    "hora": "19:16",
+    "texto": "¿El Chevrolet que publicaron en Instagram todavía está disponible? ¿Precio?",
+    "intencion_real": "disponibilidad"
+  },
+  {
+    "id": "M10",
+    "canal": "instagram",
+    "cliente": "Santiago Rodríguez",
+    "hora": "19:42",
+    "texto": "¿Dónde quedan? Quiero ir a ver carros el sábado",
+    "intencion_real": "cita"
+  },
+  {
+    "id": "M06",
+    "canal": "tiktok",
+    "cliente": "Sara Martínez",
+    "hora": "20:32",
+    "texto": "Buenas, necesito un carro automático para la familia, presupuesto 130 millones",
+    "intencion_real": "comprar"
+  },
+  {
+    "id": "M20",
+    "canal": "tiktok",
+    "cliente": "Mateo Ortiz",
+    "hora": "21:17",
+    "texto": "Cuánto quedaría la cuota mensual del Kia si doy el 30% de inicial?",
+    "intencion_real": "financiacion"
+  },
+  {
+    "id": "M12",
+    "canal": "tiktok",
+    "cliente": "David Suárez",
+    "hora": "21:34",
+    "texto": "Buenas tardes, ustedes compran carros? Tengo un Toyota con 80.000 km",
+    "intencion_real": "vender"
+  },
+  {
+    "id": "M34",
+    "canal": "web",
+    "cliente": "David Rodríguez",
+    "hora": "21:57",
+    "texto": "Hola! Estoy buscando camioneta modelo 2021 en adelante, tengo 80 millones de contado, lo necesito esta semana",
+    "intencion_real": "comprar"
+  }
+]

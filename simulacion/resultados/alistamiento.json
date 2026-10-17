@@ -1,0 +1,223 @@
+{
+  "carros": 14,
+  "linea_base": {
+    "dias_promedio": 8.9,
+    "dias_promedio_liquidez_alta": 8.2,
+    "ultimo_listo_dia": 24,
+    "costo_capital": 4322000.0
+  },
+  "agente": {
+    "dias_promedio": 9.1,
+    "dias_promedio_liquidez_alta": 9.2,
+    "ultimo_listo_dia": 25,
+    "costo_capital": 3916000.0
+  },
+  "ahorro": {
+    "dias_promedio": -0.2,
+    "costo_capital": 406000.0
+  },
+  "escenario_cupo_extra": {
+    "area": "latonería y pintura",
+    "dias_promedio": 6.9,
+    "dias_promedio_liquidez_alta": 6.6,
+    "ultimo_listo_dia": 17,
+    "costo_capital": 3267000.0,
+    "ahorro_vs_base_dias": 2.0,
+    "ahorro_vs_base_costo_capital": 1055000.0
+  },
+  "plan": [
+    {
+      "id": "A03",
+      "vehiculo": "Mazda CX-5 2022",
+      "liquidez": "alta",
+      "dia_listo": 2,
+      "dias_en_taller": 2,
+      "costo_capital": 117000.0
+    },
+    {
+      "id": "A02",
+      "vehiculo": "Toyota Corolla Cross 2022",
+      "liquidez": "alta",
+      "dia_listo": 4,
+      "dias_en_taller": 4,
+      "costo_capital": 200000.0
+    },
+    {
+      "id": "A08",
+      "vehiculo": "Nissan Kicks 2021",
+      "liquidez": "media",
+      "dia_listo": 5,
+      "dias_en_taller": 3,
+      "costo_capital": 92000.0
+    },
+    {
+      "id": "A01",
+      "vehiculo": "Mazda 2 Sedán 2022",
+      "liquidez": "alta",
+      "dia_listo": 6,
+      "dias_en_taller": 6,
+      "costo_capital": 153000.0
+    },
+    {
+      "id": "A05",
+      "vehiculo": "Toyota Fortuner 2020",
+      "liquidez": "media",
+      "dia_listo": 7,
+      "dias_en_taller": 6,
+      "costo_capital": 436000.0
+    },
+    {
+      "id": "A07",
+      "vehiculo": "Mazda CX-5 2022",
+      "liquidez": "alta",
+      "dia_listo": 7,
+      "dias_en_taller": 5,
+      "costo_capital": 297000.0
+    },
+    {
+      "id": "A04",
+      "vehiculo": "Kia Rio 2020",
+      "liquidez": "media",
+      "dia_listo": 9,
+      "dias_en_taller": 8,
+      "costo_capital": 149000.0
+    },
+    {
+      "id": "A11",
+      "vehiculo": "Mazda CX-5 2022",
+      "liquidez": "alta",
+      "dia_listo": 10,
+      "dias_en_taller": 7,
+      "costo_capital": 416000.0
+    },
+    {
+      "id": "A09",
+      "vehiculo": "Mazda CX-30 2023",
+      "liquidez": "alta",
+      "dia_listo": 12,
+      "dias_en_taller": 10,
+      "costo_capital": 515000.0
+    },
+    {
+      "id": "A10",
+      "vehiculo": "Kia Rio 2020",
+      "liquidez": "media",
+      "dia_listo": 12,
+      "dias_en_taller": 9,
+      "costo_capital": 177000.0
+    },
+    {
+      "id": "A13",
+      "vehiculo": "Kia Sportage 2021",
+      "liquidez": "media",
+      "dia_listo": 15,
+      "dias_en_taller": 11,
+      "costo_capital": 453000.0
+    },
+    {
+      "id": "A06",
+      "vehiculo": "Kia Picanto 2022",
+      "liquidez": "alta",
+      "dia_listo": 19,
+      "dias_en_taller": 18,
+      "costo_capital": 308000.0
+    },
+    {
+      "id": "A14",
+      "vehiculo": "Kia Rio 2020",
+      "liquidez": "media",
+      "dia_listo": 21,
+      "dias_en_taller": 17,
+      "costo_capital": 305000.0
+    },
+    {
+      "id": "A12",
+      "vehiculo": "Renault Logan 2019",
+      "liquidez": "alta",
+      "dia_listo": 25,
+      "dias_en_taller": 22,
+      "costo_capital": 300000.0
+    }
+  ],
+  "sobrecostos": [
+    {
+      "id": "A12",
+      "vehiculo": "Renault Logan 2019",
+      "costo": 4080000.0,
+      "presupuesto": 1310000.0,
+      "exceso": 2770000.0,
+      "tareas": [
+        "mecánica",
+        "latonería y pintura",
+        "llantas",
+        "lavado"
+      ]
+    },
+    {
+      "id": "A06",
+      "vehiculo": "Kia Picanto 2022",
+      "costo": 3510000.0,
+      "presupuesto": 1450000.0,
+      "exceso": 2060000.0,
+      "tareas": [
+        "latonería y pintura",
+        "llantas",
+        "lavado"
+      ]
+    },
+    {
+      "id": "A14",
+      "vehiculo": "Kia Rio 2020",
+      "costo": 2750000.0,
+      "presupuesto": 1520000.0,
+      "exceso": 1230000.0,
+      "tareas": [
+        "mecánica",
+        "latonería y pintura",
+        "lavado"
+      ]
+    },
+    {
+      "id": "A10",
+      "vehiculo": "Kia Rio 2020",
+      "costo": 2550000.0,
+      "presupuesto": 1520000.0,
+      "exceso": 1030000.0,
+      "tareas": [
+        "mecánica",
+        "llantas",
+        "lavado"
+      ]
+    },
+    {
+      "id": "A01",
+      "vehiculo": "Mazda 2 Sedán 2022",
+      "costo": 2400000.0,
+      "presupuesto": 1840000.0,
+      "exceso": 560000.0,
+      "tareas": [
+        "mecánica",
+        "llantas",
+        "lavado"
+      ]
+    },
+    {
+      "id": "A13",
+      "vehiculo": "Kia Sportage 2021",
+      "costo": 2800000.0,
+      "presupuesto": 2520000.0,
+      "exceso": 280000.0,
+      "tareas": [
+        "mecánica",
+        "latonería y pintura",
+        "lavado"
+      ]
+    }
+  ],
+  "cuello_botella": {
+    "area": "latonería y pintura",
+    "dias_de_trabajo_por_cupo": 21.0
+  },
+  "recomendacion": "Alistar primero Mazda CX-5 2022, Toyota Corolla Cross 2022, Nissan Kicks 2021. El cuello de botella es latonería y pintura (21 días de trabajo por cupo): un segundo cupo ahí acelera todo el flujo. 6 carro(s) superan el presupuesto de alistamiento que se usó al comprarlos: revisar el peritaje de compra.",
+  "supuestos": "Costo del capital 1,5 % mensual; capacidades por área: mecánica 2, latonería y pintura 1, llantas 1, lavado 2, fotos 2 carros a la vez."
+}

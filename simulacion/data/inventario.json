@@ -1,0 +1,202 @@
+[
+  {
+    "id": 1,
+    "marca": "Chevrolet",
+    "modelo": "Spark GT",
+    "año": 2021,
+    "kilometraje": 67000,
+    "tipo": "Hatchback",
+    "precio": 32900000,
+    "liquidez": "alta"
+  },
+  {
+    "id": 2,
+    "marca": "Kia",
+    "modelo": "Picanto",
+    "año": 2022,
+    "kilometraje": 52000,
+    "tipo": "Hatchback",
+    "precio": 41900000,
+    "liquidez": "alta"
+  },
+  {
+    "id": 3,
+    "marca": "Renault",
+    "modelo": "Sandero",
+    "año": 2022,
+    "kilometraje": 68000,
+    "tipo": "Hatchback",
+    "precio": 44900000,
+    "liquidez": "alta"
+  },
+  {
+    "id": 4,
+    "marca": "Kia",
+    "modelo": "Rio",
+    "año": 2020,
+    "kilometraje": 106500,
+    "tipo": "Sedan",
+    "precio": 45900000,
+    "liquidez": "media"
+  },
+  {
+    "id": 5,
+    "marca": "Mazda",
+    "modelo": "2 Sedán",
+    "año": 2022,
+    "kilometraje": 73000,
+    "tipo": "Sedan",
+    "precio": 62400000,
+    "liquidez": "alta"
+  },
+  {
+    "id": 6,
+    "marca": "Renault",
+    "modelo": "Duster",
+    "año": 2020,
+    "kilometraje": 82000,
+    "tipo": "SUV",
+    "precio": 55900000,
+    "liquidez": "alta"
+  },
+  {
+    "id": 7,
+    "marca": "Chevrolet",
+    "modelo": "Tracker",
+    "año": 2021,
+    "kilometraje": 79500,
+    "tipo": "SUV",
+    "precio": 66900000,
+    "liquidez": "alta"
+  },
+  {
+    "id": 8,
+    "marca": "Hyundai",
+    "modelo": "Creta",
+    "año": 2022,
+    "kilometraje": 41000,
+    "tipo": "SUV",
+    "precio": 82900000,
+    "liquidez": "media"
+  },
+  {
+    "id": 9,
+    "marca": "Mazda",
+    "modelo": "3 Touring",
+    "año": 2023,
+    "kilometraje": 12000,
+    "tipo": "Sedan",
+    "precio": 95000000,
+    "liquidez": "alta"
+  },
+  {
+    "id": 10,
+    "marca": "Kia",
+    "modelo": "Sportage",
+    "año": 2021,
+    "kilometraje": 58000,
+    "tipo": "SUV",
+    "precio": 98500000,
+    "liquidez": "media"
+  },
+  {
+    "id": 11,
+    "marca": "Toyota",
+    "modelo": "Corolla Cross",
+    "año": 2022,
+    "kilometraje": 38000,
+    "tipo": "SUV",
+    "precio": 119900000,
+    "liquidez": "alta"
+  },
+  {
+    "id": 12,
+    "marca": "Mazda",
+    "modelo": "CX-30",
+    "año": 2023,
+    "kilometraje": 21000,
+    "tipo": "SUV",
+    "precio": 121500000,
+    "liquidez": "alta"
+  },
+  {
+    "id": 13,
+    "marca": "Toyota",
+    "modelo": "Corolla Híbrido",
+    "año": 2024,
+    "kilometraje": 3800,
+    "tipo": "Sedan",
+    "precio": 135000000,
+    "liquidez": "alta"
+  },
+  {
+    "id": 14,
+    "marca": "Mazda",
+    "modelo": "CX-5",
+    "año": 2022,
+    "kilometraje": 35000,
+    "tipo": "SUV",
+    "precio": 139900000,
+    "liquidez": "alta"
+  },
+  {
+    "id": 15,
+    "marca": "Toyota",
+    "modelo": "Fortuner",
+    "año": 2020,
+    "kilometraje": 55500,
+    "tipo": "SUV",
+    "precio": 175900000,
+    "liquidez": "media"
+  },
+  {
+    "id": 16,
+    "marca": "Ford",
+    "modelo": "Ranger",
+    "año": 2021,
+    "kilometraje": 61000,
+    "tipo": "Pick-up",
+    "precio": 149900000,
+    "liquidez": "media"
+  },
+  {
+    "id": 17,
+    "marca": "Nissan",
+    "modelo": "Kicks",
+    "año": 2021,
+    "kilometraje": 47000,
+    "tipo": "SUV",
+    "precio": 72900000,
+    "liquidez": "media"
+  },
+  {
+    "id": 18,
+    "marca": "Volkswagen",
+    "modelo": "T-Cross",
+    "año": 2022,
+    "kilometraje": 29000,
+    "tipo": "SUV",
+    "precio": 92900000,
+    "liquidez": "media"
+  },
+  {
+    "id": 19,
+    "marca": "Suzuki",
+    "modelo": "Swift",
+    "año": 2022,
+    "kilometraje": 33000,
+    "tipo": "Hatchback",
+    "precio": 54900000,
+    "liquidez": "media"
+  },
+  {
+    "id": 20,
+    "marca": "Renault",
+    "modelo": "Logan",
+    "año": 2019,
+    "kilometraje": 91000,
+    "tipo": "Sedan",
+    "precio": 34900000,
+    "liquidez": "alta"
+  }
+]

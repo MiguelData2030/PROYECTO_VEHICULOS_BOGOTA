@@ -1,0 +1,192 @@
+{
+  "citas": 18,
+  "conductores": 2,
+  "linea_base": {
+    "km": 191.2,
+    "horas_conductor": 25.3,
+    "citas_tarde": 5,
+    "costo_cop": 666000.0
+  },
+  "agente": {
+    "km": 108.0,
+    "horas_conductor": 19.7,
+    "citas_tarde": 0,
+    "costo_cop": 473000.0
+  },
+  "ahorro": {
+    "km": 83.2,
+    "km_pct": 43.5,
+    "horas": 5.6,
+    "costo_cop": 193000.0,
+    "costo_mes_cop": 4246000.0,
+    "citas_tarde_evitadas": 5
+  },
+  "rutas": [
+    {
+      "conductor": 1,
+      "paradas": [
+        {
+          "cita": "C07",
+          "tipo": "peritaje",
+          "zona": "Salitre",
+          "llegada": "08:19",
+          "ventana": "08:00-12:00",
+          "retraso_min": 0
+        },
+        {
+          "cita": "C01",
+          "tipo": "peritaje",
+          "zona": "Kennedy",
+          "llegada": "09:24",
+          "ventana": "08:00-17:30",
+          "retraso_min": 0
+        },
+        {
+          "cita": "C15",
+          "tipo": "peritaje",
+          "zona": "Kennedy",
+          "llegada": "10:11",
+          "ventana": "08:00-17:30",
+          "retraso_min": 0
+        },
+        {
+          "cita": "C10",
+          "tipo": "test_drive",
+          "zona": "Kennedy",
+          "llegada": "11:00",
+          "ventana": "08:00-17:30",
+          "retraso_min": 0
+        },
+        {
+          "cita": "C04",
+          "tipo": "entrega",
+          "zona": "Bosa",
+          "llegada": "11:55",
+          "ventana": "08:00-12:00",
+          "retraso_min": 0
+        },
+        {
+          "cita": "C09",
+          "tipo": "test_drive",
+          "zona": "Kennedy",
+          "llegada": "13:13",
+          "ventana": "13:00-17:30",
+          "retraso_min": 0
+        },
+        {
+          "cita": "C16",
+          "tipo": "test_drive",
+          "zona": "Fontibón",
+          "llegada": "14:12",
+          "ventana": "13:00-17:30",
+          "retraso_min": 0
+        },
+        {
+          "cita": "C05",
+          "tipo": "peritaje",
+          "zona": "Salitre",
+          "llegada": "15:06",
+          "ventana": "08:00-17:30",
+          "retraso_min": 0
+        },
+        {
+          "cita": "C02",
+          "tipo": "entrega",
+          "zona": "Salitre",
+          "llegada": "15:55",
+          "ventana": "08:00-17:30",
+          "retraso_min": 0
+        }
+      ],
+      "km": 44.5,
+      "fin": "17:14",
+      "horas": 9.23,
+      "espera_min": 0,
+      "citas_tarde": 0
+    },
+    {
+      "conductor": 2,
+      "paradas": [
+        {
+          "cita": "C17",
+          "tipo": "entrega",
+          "zona": "Teusaquillo",
+          "llegada": "08:19",
+          "ventana": "08:00-17:30",
+          "retraso_min": 0
+        },
+        {
+          "cita": "C14",
+          "tipo": "test_drive",
+          "zona": "Teusaquillo",
+          "llegada": "09:21",
+          "ventana": "08:00-17:30",
+          "retraso_min": 0
+        },
+        {
+          "cita": "C03",
+          "tipo": "peritaje",
+          "zona": "Puente Aranda",
+          "llegada": "10:18",
+          "ventana": "08:00-12:00",
+          "retraso_min": 0
+        },
+        {
+          "cita": "C08",
+          "tipo": "test_drive",
+          "zona": "Puente Aranda",
+          "llegada": "11:06",
+          "ventana": "08:00-17:30",
+          "retraso_min": 0
+        },
+        {
+          "cita": "C18",
+          "tipo": "peritaje",
+          "zona": "Engativá",
+          "llegada": "12:22",
+          "ventana": "08:00-17:30",
+          "retraso_min": 0
+        },
+        {
+          "cita": "C12",
+          "tipo": "test_drive",
+          "zona": "Engativá",
+          "llegada": "13:11",
+          "ventana": "13:00-17:30",
+          "retraso_min": 0
+        },
+        {
+          "cita": "C06",
+          "tipo": "entrega",
+          "zona": "Engativá",
+          "llegada": "13:55",
+          "ventana": "13:00-17:30",
+          "retraso_min": 0
+        },
+        {
+          "cita": "C13",
+          "tipo": "entrega",
+          "zona": "Salitre",
+          "llegada": "15:20",
+          "ventana": "13:00-17:30",
+          "retraso_min": 0
+        },
+        {
+          "cita": "C11",
+          "tipo": "peritaje",
+          "zona": "Cedritos",
+          "llegada": "17:13",
+          "ventana": "13:00-17:30",
+          "retraso_min": 0
+        }
+      ],
+      "km": 63.5,
+      "fin": "18:26",
+      "horas": 10.43,
+      "espera_min": 0,
+      "citas_tarde": 0
+    }
+  ],
+  "recomendacion": "Con 2 conductores las 18 citas se cubren en 108.0 km y 19.7 horas, con 0 llegadas tarde (antes: 191.2 km, 25.3 horas y 5 llegadas tarde).",
+  "supuestos": "Velocidad 20 km/h; calles = línea recta × 1,35; $1.100 por km y $18.000 por hora de conductor; 22 días al mes."
+}
