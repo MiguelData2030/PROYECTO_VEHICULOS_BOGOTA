@@ -1,19 +1,17 @@
 """
 Datos simulados para los agentes nuevos de AutoNegocio.
 
-Todo se genera con una semilla fija: cada ejecución produce exactamente los
-mismos datos, así los resultados de la simulación se pueden repetir y auditar.
-Los nombres, direcciones y cifras son ficticios.
+Todo se genera con una semilla: la misma semilla produce exactamente los
+mismos datos, así los resultados se pueden repetir y auditar. Los nombres,
+direcciones y cifras son ficticios. Los generadores que usan carros reciben el
+inventario (el del sistema o el de ejemplo de este módulo).
 """
 
 from __future__ import annotations
 
-import json
 import random
-from pathlib import Path
 
 SEMILLA = 2026
-DATA_DIR = Path(__file__).parent / "data"
 
 # Sede de AutoNegocio (Calle 80 con Avenida 68, Bogotá)
 SEDE = {"nombre": "Sede AutoNegocio (Calle 80)", "lat": 4.6880, "lon": -74.0780}
@@ -75,7 +73,7 @@ def inventario() -> list[dict]:
 
 
 # ---------------------------------------------------------------- logística
-def citas_del_dia(rng: random.Random) -> list[dict]:
+def citas_del_dia(rng: random.Random, n: int = 18) -> list[dict]:
     """
     Agenda de un sábado: peritajes a domicilio (carros que el negocio va a
     comprar), entregas de carros vendidos y test drives a domicilio.
@@ -85,7 +83,7 @@ def citas_del_dia(rng: random.Random) -> list[dict]:
     ventanas = [("mañana", "08:00", "12:00"), ("tarde", "13:00", "17:30"), ("flexible", "08:00", "17:30")]
     citas = []
     zonas = list(ZONAS)
-    for i in range(18):
+    for i in range(n):
         tipo, minutos = rng.choices(tipos, weights=[5, 3, 2])[0]
         zona = rng.choice(zonas)
         lat, lon = ZONAS[zona]
@@ -116,11 +114,14 @@ TAREAS = [
 ]
 
 
-def compras_por_alistar(rng: random.Random) -> list[dict]:
+def compras_por_alistar(rng: random.Random, inv: list[dict] | None = None, n: int = 14) -> list[dict]:
     """Carros recién comprados que esperan alistamiento antes de publicarse."""
+    inv = inv or inventario()
     out = []
-    for i in range(14):
-        marca, modelo, año, km, tipo, precio, liquidez = rng.choice(INVENTARIO)
+    for i in range(n):
+        v = rng.choice(inv)
+        marca, modelo, año, km, precio = v["marca"], v["modelo"], v["año"], v["kilometraje"], v["precio"]
+        liquidez = v.get("liquidez", "media")
         compra = round(precio * rng.uniform(0.78, 0.86), -5)
         tareas = []
         for nombre, dias, costo, prob in TAREAS:
@@ -149,11 +150,11 @@ def compras_por_alistar(rng: random.Random) -> list[dict]:
 EMPLEOS = ["empleado", "independiente", "pensionado"]
 
 
-def solicitudes_credito(rng: random.Random) -> list[dict]:
+def solicitudes_credito(rng: random.Random, inv: list[dict] | None = None, n: int = 25) -> list[dict]:
     """Compradores que piden financiación para un carro del inventario."""
-    inv = inventario()
+    inv = inv or inventario()
     out = []
-    for i in range(25):
+    for i in range(n):
         carro = rng.choice(inv)
         ingreso = round(rng.choice([2.8, 3.5, 4.2, 5.0, 6.5, 8.0, 10.0, 14.0]) * 1_000_000 * rng.uniform(0.9, 1.15), -4)
         out.append({
@@ -194,10 +195,10 @@ PLANTILLAS = [
 CANALES = ["whatsapp", "instagram", "facebook", "tiktok", "web"]
 
 
-def mensajes_entrantes(rng: random.Random) -> list[dict]:
+def mensajes_entrantes(rng: random.Random, n: int = 40) -> list[dict]:
     """Mensajes que llegan por WhatsApp y redes en un día."""
     out = []
-    for i in range(40):
+    for i in range(n):
         intencion, plantilla = rng.choice(PLANTILLAS)
         texto = plantilla.format(
             marca=rng.choice(["Mazda", "Toyota", "Kia", "Chevrolet", "Renault", "Hyundai"]),
@@ -216,22 +217,15 @@ def mensajes_entrantes(rng: random.Random) -> list[dict]:
     return sorted(out, key=lambda m: m["hora"])
 
 
-def generar() -> dict:
-    rng = random.Random(SEMILLA)
-    datos = {
+def generar(semilla: int = SEMILLA, inv: list[dict] | None = None) -> dict:
+    """Todos los datos de la simulación. Mismo orden de generación = mismos datos."""
+    rng = random.Random(semilla)
+    inv = inv or inventario()
+    return {
         "sede": SEDE,
-        "inventario": inventario(),
+        "inventario": inv,
         "citas": citas_del_dia(rng),
-        "alistamiento": compras_por_alistar(rng),
-        "credito": solicitudes_credito(rng),
+        "alistamiento": compras_por_alistar(rng, inv),
+        "credito": solicitudes_credito(rng, inv),
         "mensajes": mensajes_entrantes(rng),
     }
-    DATA_DIR.mkdir(exist_ok=True)
-    for clave, valor in datos.items():
-        (DATA_DIR / f"{clave}.json").write_text(json.dumps(valor, ensure_ascii=False, indent=2), encoding="utf-8")
-    return datos
-
-
-if __name__ == "__main__":
-    d = generar()
-    print({k: len(v) if isinstance(v, list) else 1 for k, v in d.items()})

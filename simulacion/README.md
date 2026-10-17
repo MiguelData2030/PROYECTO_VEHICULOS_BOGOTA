@@ -1,23 +1,25 @@
 # Simulación de agentes nuevos
 
-Cuatro agentes propuestos para AutoNegocio, probados con datos simulados:
+Mide los 4 agentes de operación contra una línea base (cómo se haría sin
+agente), con datos simulados. Son los mismos agentes del panel web:
 
 | Agente | Código | Skill |
 | --- | --- | --- |
-| Logística | `agentes/logistica.py` | `skills/logistica/SKILL.md` |
-| Alistamiento | `agentes/alistamiento.py` | `skills/alistamiento/SKILL.md` |
-| Crédito | `agentes/credito.py` | `skills/credito/SKILL.md` |
-| Atención 24/7 | `agentes/atencion.py` | `skills/atencion/SKILL.md` |
+| Logística | `backend/agents/logistica.py` | `skills/logistica/SKILL.md` |
+| Alistamiento | `backend/agents/alistamiento.py` | `skills/alistamiento/SKILL.md` |
+| Crédito | `backend/agents/credito.py` | `skills/credito/SKILL.md` |
+| Atención 24/7 | `backend/agents/atencion.py` | `skills/atencion/SKILL.md` |
 
 ## Ejecutar
 
-Solo necesita Python 3.10 o superior (sin librerías adicionales):
+Desde la raíz del proyecto, con las dependencias instaladas (`pip install -r requirements.txt`):
 
 ```bash
 python simulacion/run.py
 ```
 
-- `datos.py` genera los datos con semilla fija (2026): siempre los mismos números.
+- `backend/agents/datos_simulados.py` genera los datos con semilla fija (2026): siempre los mismos números.
+  Esta simulación usa el inventario de ejemplo; el panel web usa el inventario real.
 - `data/` guarda los datos simulados (citas, carros por alistar, solicitudes de
   crédito, mensajes, inventario).
 - `resultados/` guarda el resultado de cada agente (`.json`) y `resumen.md`.

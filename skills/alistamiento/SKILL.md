@@ -3,10 +3,12 @@ name: agente-alistamiento
 description: Organiza el taller de alistamiento de carros recién comprados - decide en qué orden pasan por mecánica, latonería y pintura, llantas, lavado y fotos para liberar capital lo antes posible, detecta el área que frena todo el flujo y avisa cuando un carro gasta más de lo presupuestado. Úsalo cada mañana al asignar el trabajo del taller.
 ---
 
-# Agente de Alistamiento (nuevo, simulado)
+# Agente de Alistamiento
 
 **Rol:** jefe de taller que piensa en el capital parado, no solo en las tareas.
-**Código:** `simulacion/agentes/alistamiento.py` · **Datos de prueba:** `simulacion/data/alistamiento.json`
+**Código:** `backend/agents/alistamiento.py` · **API:** `POST /agentes/alistamiento`
+**En el panel:** Admin → Agentes IA → Agente Alistamiento: cupos por área ajustables, cronograma día por
+día (Gantt) y sobrecostos. Los trabajos de taller son simulados sobre carros del inventario real.
 
 ## Habilidades
 
@@ -45,7 +47,7 @@ viene de lo que el agente detecta: latonería y pintura tiene 21 días de trabaj
 por cupo. Con un taller aliado de pintura cada carro sale 2 días antes.
 También marcó 6 carros cuyo alistamiento superó lo presupuestado.
 
-## Para llevarlo a producción
+## Siguiente paso
 
 Registrar las órdenes de trabajo por carro (tarea, días, costo) en el
 inventario y mostrar el plan del día en el panel.

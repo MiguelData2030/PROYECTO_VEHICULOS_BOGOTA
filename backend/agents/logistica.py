@@ -61,7 +61,8 @@ def simular_ruta(sede: dict, ruta: list[dict]) -> dict:
             t = _min(c["desde"])
         retraso = max(0.0, t - _min(c["hasta"]))
         tarde += retraso > 0
-        paradas.append({"cita": c["id"], "tipo": c["tipo"], "zona": c["zona"], "llegada": _hhmm(t),
+        paradas.append({"cita": c["id"], "tipo": c["tipo"], "zona": c["zona"], "cliente": c.get("cliente"),
+                        "lat": c["lat"], "lon": c["lon"], "llegada": _hhmm(t),
                         "ventana": f"{c['desde']}-{c['hasta']}", "retraso_min": round(retraso)})
         t += c["duracion_min"]
         pos = c
@@ -102,7 +103,7 @@ def _ordenar(sede: dict, citas: list[dict]) -> list[dict]:
     return ruta
 
 
-def _repartir(sede: dict, citas: list[dict]) -> list[list[dict]]:
+def _repartir(sede: dict, citas: list[dict], conductores: int) -> list[list[dict]]:
     """Sectores alrededor de la sede, cortados para equilibrar el trabajo."""
     ang = sorted(citas, key=lambda c: math.atan2(c["lat"] - sede["lat"], c["lon"] - sede["lon"]))
     carga_total = sum(c["duracion_min"] + 2 * _viaje(sede, c) for c in ang)
@@ -110,7 +111,7 @@ def _repartir(sede: dict, citas: list[dict]) -> list[list[dict]]:
     for c in ang:
         actual.append(c)
         carga += c["duracion_min"] + 2 * _viaje(sede, c)
-        if len(grupos) < CONDUCTORES - 1 and carga >= carga_total / CONDUCTORES:
+        if len(grupos) < conductores - 1 and carga >= carga_total / conductores:
             grupos.append(actual)
             actual, carga = [], 0.0
     grupos.append(actual)
@@ -128,18 +129,20 @@ def _resumen(rutas: list[dict]) -> dict:
     }
 
 
-def analizar(sede: dict, citas: list[dict]) -> dict:
+def analizar(sede: dict, citas: list[dict], conductores: int = CONDUCTORES) -> dict:
+    conductores = max(1, min(conductores, len(citas) or 1))
     # Línea base: orden de llegada, conductores alternados
-    base = [simular_ruta(sede, citas[i::CONDUCTORES]) for i in range(CONDUCTORES)]
+    base = [simular_ruta(sede, citas[i::conductores]) for i in range(conductores)]
     # Agente
-    grupos = _repartir(sede, citas)
+    grupos = _repartir(sede, citas, conductores)
     rutas = [simular_ruta(sede, _ordenar(sede, g)) for g in grupos]
     rb, ra = _resumen(base), _resumen(rutas)
     ahorro_km = rb["km"] - ra["km"]
     ahorro_h = rb["horas_conductor"] - ra["horas_conductor"]
     return {
         "citas": len(citas),
-        "conductores": CONDUCTORES,
+        "conductores": conductores,
+        "sede": sede,
         "linea_base": rb,
         "agente": ra,
         "ahorro": {
@@ -152,11 +155,11 @@ def analizar(sede: dict, citas: list[dict]) -> dict:
         },
         "rutas": [{"conductor": i + 1, **r} for i, r in enumerate(rutas)],
         "recomendacion": (
-            f"Con {CONDUCTORES} conductores las {len(citas)} citas se cubren en {ra['km']} km y "
+            f"Con {conductores} conductor{'es' if conductores > 1 else ''} las {len(citas)} citas se cubren en {ra['km']} km y "
             f"{ra['horas_conductor']} horas, con {ra['citas_tarde']} llegadas tarde "
             f"(antes: {rb['km']} km, {rb['horas_conductor']} horas y {rb['citas_tarde']} llegadas tarde)."
         ),
         "supuestos": f"Velocidad {VELOCIDAD_KMH} km/h; calles = línea recta × {str(FACTOR_CALLES).replace('.', ',')}; "
-                     f"${COSTO_KM:,} por km y ${COSTO_HORA:,} por hora de conductor; 22 días al mes."
+                     f"${COSTO_KM:,} por km y ${COSTO_HORA:,} por hora de conductor; 22 días al mes; salida 08:00."
                      .replace(",", ".").replace("× 1.35", "× 1,35"),
     }

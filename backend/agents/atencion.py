@@ -153,3 +153,43 @@ def analizar(mensajes: list[dict], inventario: list[dict]) -> dict:
                      "La precisión se mide contra mensajes simulados; con mensajes reales será menor "
                      "con palabras clave y mayor con Claude.",
     }
+
+
+SYSTEM_PROMPT = """Eres el asesor de primera línea de AutoNegocio, compraventa de carros usados en Bogotá,
+y respondes mensajes de WhatsApp y redes sociales. Escribes como una persona: cercano, breve
+(máximo 3 frases), español de Colombia, máximo 1 emoji. Reglas: usa solo los carros, precios y
+datos que te doy; nunca prometas descuentos, aprobaciones de crédito ni fechas; termina con una
+pregunta que avance la venta (visita, fotos, cuota inicial). Responde solo con el texto del mensaje."""
+
+
+async def responder_con_ia(m: dict, inv: list[dict]) -> dict:
+    """
+    Igual que responder(), pero si Claude está activo redacta él la respuesta
+    con los mismos datos (intención, datos extraídos y carros que encajan).
+    Las quejas y los mensajes dudosos siguen yendo a una persona.
+    """
+    r = responder(m, inv)
+    r["respuesta_ia"] = False
+    if r["a_humano"]:
+        return r
+    from .base_agent import ask_claude  # lazy: keeps this module usable without the API settings
+
+    carros = _carros(inv, r, n=3) if r["intencion"] in ("comprar", "disponibilidad") else []
+    lista = "\n".join(f"- {v['marca']} {v['modelo']} {v['año']}, {_km(v['kilometraje'])} km, {_cop(v['precio'])}"
+                      for v in carros) or "- (no hay carros que encajen; ofrece avisarle cuando entre uno)"
+    texto = await ask_claude(
+        f"""Mensaje de {m['cliente']} por {m['canal']}: "{m['texto']}"
+Intención detectada: {r['intencion']}. Datos: marca {r['marca'] or '-'}, tipo {r['tipo'] or '-'},
+presupuesto {_cop(r['presupuesto']) if r['presupuesto'] else '-'}, ingreso {_cop(r['ingreso']) if r['ingreso'] else '-'},
+urgente {'sí' if r['urgente'] else 'no'}.
+Carros del inventario que encajan:
+{lista}
+Datos del negocio: Bogotá, lunes a sábado de 8:00 a 6:00; compramos carros de contado (cotizador:
+autonegocio-web.onrender.com/cotiza); financiamos desde 10 % de inicial hasta 72 meses.
+Respuesta sugerida por las reglas (mejórala, no la copies): {r['respuesta']}""",
+        system=SYSTEM_PROMPT,
+        max_tokens=1000,
+    )
+    if texto:
+        r["respuesta"], r["respuesta_ia"] = texto.strip().strip('"'), True
+    return r

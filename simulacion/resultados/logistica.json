@@ -1,6 +1,11 @@
 {
   "citas": 18,
   "conductores": 2,
+  "sede": {
+    "nombre": "Sede AutoNegocio (Calle 80)",
+    "lat": 4.688,
+    "lon": -74.078
+  },
   "linea_base": {
     "km": 191.2,
     "horas_conductor": 25.3,
@@ -29,6 +34,9 @@
           "cita": "C07",
           "tipo": "peritaje",
           "zona": "Salitre",
+          "cliente": "Alejandro Suárez",
+          "lat": 4.65761,
+          "lon": -74.10734,
           "llegada": "08:19",
           "ventana": "08:00-12:00",
           "retraso_min": 0
@@ -37,6 +45,9 @@
           "cita": "C01",
           "tipo": "peritaje",
           "zona": "Kennedy",
+          "cliente": "David López",
+          "lat": 4.63491,
+          "lon": -74.14489,
           "llegada": "09:24",
           "ventana": "08:00-17:30",
           "retraso_min": 0
@@ -45,6 +56,9 @@
           "cita": "C15",
           "tipo": "peritaje",
           "zona": "Kennedy",
+          "cliente": "Carolina Castro",
+          "lat": 4.62904,
+          "lon": -74.14467,
           "llegada": "10:11",
           "ventana": "08:00-17:30",
           "retraso_min": 0
@@ -53,6 +67,9 @@
           "cita": "C10",
           "tipo": "test_drive",
           "zona": "Kennedy",
+          "cliente": "Valentina Castro",
+          "lat": 4.62746,
+          "lon": -74.15232,
           "llegada": "11:00",
           "ventana": "08:00-17:30",
           "retraso_min": 0
@@ -61,6 +78,9 @@
           "cita": "C04",
           "tipo": "entrega",
           "zona": "Bosa",
+          "cliente": "Diego Torres",
+          "lat": 4.61526,
+          "lon": -74.18302,
           "llegada": "11:55",
           "ventana": "08:00-12:00",
           "retraso_min": 0
@@ -69,6 +89,9 @@
           "cita": "C09",
           "tipo": "test_drive",
           "zona": "Kennedy",
+          "cliente": "Andrés Ramírez",
+          "lat": 4.63278,
+          "lon": -74.14627,
           "llegada": "13:13",
           "ventana": "13:00-17:30",
           "retraso_min": 0
@@ -77,6 +100,9 @@
           "cita": "C16",
           "tipo": "test_drive",
           "zona": "Fontibón",
+          "cliente": "Valentina Ortiz",
+          "lat": 4.67441,
+          "lon": -74.13587,
           "llegada": "14:12",
           "ventana": "13:00-17:30",
           "retraso_min": 0
@@ -85,6 +111,9 @@
           "cita": "C05",
           "tipo": "peritaje",
           "zona": "Salitre",
+          "cliente": "Mateo Martínez",
+          "lat": 4.65502,
+          "lon": -74.11339,
           "llegada": "15:06",
           "ventana": "08:00-17:30",
           "retraso_min": 0
@@ -93,6 +122,9 @@
           "cita": "C02",
           "tipo": "entrega",
           "zona": "Salitre",
+          "cliente": "Juliana Suárez",
+          "lat": 4.65552,
+          "lon": -74.10444,
           "llegada": "15:55",
           "ventana": "08:00-17:30",
           "retraso_min": 0
@@ -111,6 +143,9 @@
           "cita": "C17",
           "tipo": "entrega",
           "zona": "Teusaquillo",
+          "cliente": "Laura Castro",
+          "lat": 4.64516,
+          "lon": -74.08338,
           "llegada": "08:19",
           "ventana": "08:00-17:30",
           "retraso_min": 0
@@ -119,6 +154,9 @@
           "cita": "C14",
           "tipo": "test_drive",
           "zona": "Teusaquillo",
+          "cliente": "Carolina Rojas",
+          "lat": 4.64659,
+          "lon": -74.08732,
           "llegada": "09:21",
           "ventana": "08:00-17:30",
           "retraso_min": 0
@@ -127,6 +165,9 @@
           "cita": "C03",
           "tipo": "peritaje",
           "zona": "Puente Aranda",
+          "cliente": "Natalia López",
+          "lat": 4.61509,
+          "lon": -74.10533,
           "llegada": "10:18",
           "ventana": "08:00-12:00",
           "retraso_min": 0
@@ -135,6 +176,9 @@
           "cita": "C08",
           "tipo": "test_drive",
           "zona": "Puente Aranda",
+          "cliente": "Diego Torres",
+          "lat": 4.6222,
+          "lon": -74.10985,
           "llegada": "11:06",
           "ventana": "08:00-17:30",
           "retraso_min": 0
@@ -143,6 +187,9 @@
           "cita": "C18",
           "tipo": "peritaje",
           "zona": "Engativá",
+          "cliente": "Paula López",
+          "lat": 4.7015,
+          "lon": -74.10558,
           "llegada": "12:22",
           "ventana": "08:00-17:30",
           "retraso_min": 0
@@ -151,6 +198,9 @@
           "cita": "C12",
           "tipo": "test_drive",
           "zona": "Engativá",
+          "cliente": "Manuela Díaz",
+          "lat": 4.70787,
+          "lon": -74.10936,
           "llegada": "13:11",
           "ventana": "13:00-17:30",
           "retraso_min": 0
@@ -159,6 +209,9 @@
           "cita": "C06",
           "tipo": "entrega",
           "zona": "Engativá",
+          "cliente": "David Díaz",
+          "lat": 4.69845,
+          "lon": -74.1082,
           "llegada": "13:55",
           "ventana": "13:00-17:30",
           "retraso_min": 0
@@ -167,6 +220,9 @@
           "cita": "C13",
           "tipo": "entrega",
           "zona": "Salitre",
+          "cliente": "Natalia Torres",
+          "lat": 4.64217,
+          "lon": -74.1123,
           "llegada": "15:20",
           "ventana": "13:00-17:30",
           "retraso_min": 0
@@ -175,6 +231,9 @@
           "cita": "C11",
           "tipo": "peritaje",
           "zona": "Cedritos",
+          "cliente": "Julián Suárez",
+          "lat": 4.72786,
+          "lon": -74.03173,
           "llegada": "17:13",
           "ventana": "13:00-17:30",
           "retraso_min": 0
@@ -188,5 +247,5 @@
     }
   ],
   "recomendacion": "Con 2 conductores las 18 citas se cubren en 108.0 km y 19.7 horas, con 0 llegadas tarde (antes: 191.2 km, 25.3 horas y 5 llegadas tarde).",
-  "supuestos": "Velocidad 20 km/h; calles = línea recta × 1,35; $1.100 por km y $18.000 por hora de conductor; 22 días al mes."
+  "supuestos": "Velocidad 20 km/h; calles = línea recta × 1,35; $1.100 por km y $18.000 por hora de conductor; 22 días al mes; salida 08:00."
 }

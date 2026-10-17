@@ -3,10 +3,12 @@ name: agente-credito
 description: Precalifica a un comprador que quiere financiar un carro - calcula la cuota con la tasa según su puntaje de buró y su capacidad de pago, y si no le alcanza busca cómo sí - más plazo, más cuota inicial u otro carro del inventario. Úsalo cuando un cliente pregunta por financiación, antes de enviar la solicitud al banco.
 ---
 
-# Agente de Crédito (nuevo, simulado)
+# Agente de Crédito
 
 **Rol:** asesor de financiación que busca el camino para cerrar la venta.
-**Código:** `simulacion/agentes/credito.py` · **Datos de prueba:** `simulacion/data/credito.json`
+**Código:** `backend/agents/credito.py` · **API:** `POST /agentes/credito`, `POST /agentes/credito/simulacion`
+**En el panel:** Admin → Agentes IA → Agente Crédito: formulario para precalificar a un cliente con un
+carro del inventario (decisión, cuota por plazo) y simulación de un lote de 25 solicitudes.
 
 ## Habilidades
 

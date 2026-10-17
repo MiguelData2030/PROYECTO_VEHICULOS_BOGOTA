@@ -1,54 +1,84 @@
 ---
 name: agente-marketing
-description: Escribe los textos de venta de un carro del inventario - título para TuCarro y Carroya, descripción del catálogo, post de Instagram y mensaje de WhatsApp - solo con los datos reales de la ficha. Úsalo cada vez que entra un carro nuevo al inventario.
+description: Gerente de marketing del negocio de carros usados - mide qué red social vende de verdad (del alcance al carro vendido), reparte el presupuesto de pauta del próximo mes hacia las redes que más venden, elige qué carros impulsar y a qué público, arma el calendario de contenido de la semana, detecta alertas y propone pruebas A/B. También escribe las piezas de cada carro (anuncio, descripción, post y WhatsApp). Úsalo cada lunes para planear la semana y cada mes para decidir la pauta.
 ---
 
 # Agente de Marketing
 
-**Rol:** publicista especializado en carros usados en Colombia.
-**Código:** `backend/agents/marketing.py` · **API:** `POST /agentes/marketing/{vehiculo_id}`
-**En el panel:** Admin → Inventario → botón Marketing de cada carro
+**Rol:** gerente de marketing que piensa en ventas y margen, no en likes.
+**Código:** `backend/agents/marketing.py`
+**API:** `POST /agentes/marketing/estrategia?dias=90&presupuesto=` y `POST /agentes/marketing/{vehiculo_id}`
+**En el panel:** Admin → Agentes IA → Agente Marketing (pestañas "Estrategia y presupuesto" y "Crear anuncios de un carro")
 
 ## Habilidades
 
-1. **Leer la ficha:** marca, modelo, año, tipo, kilometraje, transmisión,
-   combustible, cilindraje, color, dueños, estado mecánico, ciudad, precio y
-   documentos (SOAT, tecnomecánica, impuestos, libre de prendas).
-2. **Encontrar los argumentos de venta:** único dueño, papeles al día, libre
-   de prendas, híbrido sin pico y placa; solo si son ciertos.
-3. **Escribir 4 piezas:**
+1. **Medir el embudo de cada red** (Instagram, Facebook, TikTok, WhatsApp):
+   alcance → leads → ventas del CRM → ganancia. Calcula costo por lead,
+   conversión de lead a venta, costo por venta y retorno de la pauta
+   (ganancia de los carros vendidos por cada peso invertido).
+2. **Repartir el presupuesto del próximo mes:** mueve dinero hacia las redes
+   que venden más por cada millón invertido, con un ajuste máximo de ±30 % por
+   red, y reserva un 10 % para probar pauta en la red que ya trae clientes sin
+   pagar. Estima leads y ventas esperadas con esa pauta.
+3. **Elegir qué carros impulsar:** prioriza por días en inventario (50 %),
+   margen (30 %) y tiempo sin publicarse (20 %). Para cada carro define:
 
-   | Pieza | Formato |
-   | --- | --- |
-   | Título | Máximo 60 caracteres, para TuCarro y Carroya |
-   | Descripción | 80 a 130 palabras para el catálogo web |
-   | Instagram | Post con 3 a 5 emojis y 8 a 12 hashtags de Bogotá y Colombia |
-   | WhatsApp | 2 o 3 líneas para enviar a un cliente interesado |
+   | Segmento | Público | Mensaje clave | Redes |
+   | --- | --- | --- | --- |
+   | Primer carro (hatchback o menos de $50 M) | 22 a 34 años | cuota baja, poco consumo | TikTok, Instagram |
+   | Ciudad (sedán) | profesionales de 25 a 45 | economía, comodidad | Instagram, Facebook |
+   | Familia (SUV) | familias de 30 a 50 | espacio, seguridad, financiación | Facebook, Instagram |
+   | Ejecutivo (más de $120 M) | 35 a 55, alto poder adquisitivo | estatus, bajo kilometraje | Instagram, Facebook |
+   | Trabajo (pick-up) | independientes y empresas | carga, financiación | Facebook |
 
-4. **Cerrar con llamado a la acción:** recibimos tu carro en parte de pago,
-   financiamos, agenda tu visita.
+   Dentro de las redes del segmento elige la que más leads trae por publicación
+   y calcula la cuota mensual "desde" (20 % de inicial, 60 meses, 19,5 % E.A.).
+4. **Armar el calendario de la semana:** 10 piezas repartidas según los leads
+   de cada red, en el formato que mejor le funciona (reel, video, carrusel,
+   historia, post) y en sus mejores días, sin repetir red el mismo día. Cada
+   pieza trae su gancho listo para producir.
+5. **Alertar:** leads de redes con más de 1 día sin respuesta (y cuánta venta
+   ponen en riesgo), redes con costo por lead 1,4 veces el promedio, caída de
+   engagement mayor al 20 %, formatos con 3 o más publicaciones sin leads y
+   carros con más de 60 días en inventario.
+6. **Proponer pruebas A/B:** por ejemplo, precio visible contra "cuota desde",
+   o video con asesor contra solo el carro, con la métrica para decidir.
+7. **Escribir las piezas de un carro** (habilidad de redacción): título de
+   60 caracteres para TuCarro y Carroya, descripción para el catálogo, post de
+   Instagram con hashtags de Bogotá y mensaje de WhatsApp, sin inventar datos.
 
-## Reglas
+## Datos que usa
 
-- Nunca inventar equipamiento, garantías ni datos que no estén en la ficha.
-- Tono cercano y profesional, español de Colombia.
-- Quitar de la descripción las líneas que no son texto de venta (créditos de fotos).
+Métricas diarias de cada red (alcance, interacciones, leads, inversión),
+publicaciones con sus resultados (últimos 90 días como mínimo), negocios del
+CRM por canal, ventas de los últimos 12 meses (ganancia por carro) e
+inventario disponible con fechas de compra y precios.
 
 ## Salida
 
-`titulo`, `descripcion`, `instagram`, `whatsapp` e indicador de si los escribió Claude.
+Embudo por red, presupuesto actual contra recomendado, leads y ventas
+esperadas, carros a impulsar con público, mensaje, red y formato, calendario
+semanal, alertas, pruebas A/B y un plan escrito.
 
-## Ejemplo
+## Ejemplo (datos demo, últimos 90 días)
 
-Título: **"Kia Picanto 2022 automática 52.000 km"**. La descripción menciona
-motor de 1.250 cc, papeles al día y libre de prendas, porque están en la ficha.
+Instagram vendió 7 carros con $2.925.000 de pauta: cada peso trajo 22,4 pesos
+de ganancia. Facebook vendió 1 con $1.950.000. TikTok trajo 124 leads y 2 ventas
+sin pauta. Plan del mes: Instagram +9 %, Facebook −40 % y prueba de $160.000 en
+TikTok. Primer carro a impulsar: Mazda 2 Sedán 2022 (69 días en inventario,
+margen de 26 %, nunca publicado) en reel de Instagram para profesionales de
+25 a 45 años. Alerta: 3 leads de redes llevan más de 1 día sin respuesta.
 
 ## Con Claude
 
-Claude redacta las 4 piezas con más variedad y gancho. Si su respuesta no trae
-las 4 secciones, el agente usa su plantilla.
+Claude recibe todo el cálculo y escribe el plan del gerente: diagnóstico, el
+concepto de campaña del mes con nombre, las 3 movidas con cifras, qué dejar de
+hacer y el indicador a revisar cada lunes. También redacta las piezas.
 
 ## Límites
 
-- La calidad depende de la ficha: si faltan datos, el texto es más genérico.
-- No publica por su cuenta: entrega los textos para copiarlos.
+- La venta se atribuye al canal donde nació el lead en el CRM: si el equipo no
+  registra el canal, el retorno de cada red se distorsiona.
+- Las horas de publicación son buenas prácticas para Bogotá: el sistema no
+  guarda la hora de cada post.
+- No publica ni compra pauta por su cuenta: entrega el plan y las piezas.

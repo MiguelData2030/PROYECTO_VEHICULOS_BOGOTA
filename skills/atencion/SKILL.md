@@ -3,10 +3,12 @@ name: agente-atencion
 description: Da la primera respuesta a los mensajes de WhatsApp, Instagram, Facebook, TikTok y la web a cualquier hora - entiende si el cliente quiere comprar, vender, financiar, saber si un carro está disponible, agendar una cita o quejarse, responde con el inventario real, marca los leads calientes y pasa a una persona las quejas y lo que no entiende. Úsalo como primer filtro de todos los mensajes entrantes.
 ---
 
-# Agente de Atención 24/7 (nuevo, simulado)
+# Agente de Atención 24/7
 
 **Rol:** asesor de primera línea que nunca deja un mensaje sin respuesta.
-**Código:** `simulacion/agentes/atencion.py` · **Datos de prueba:** `simulacion/data/mensajes.json`
+**Código:** `backend/agents/atencion.py` · **API:** `POST /agentes/atencion`, `POST /agentes/atencion/simulacion`
+**En el panel:** Admin → Agentes IA → Agente Atención 24/7: chat para escribirle como cliente (con opción
+de guardar cada conversación como lead en el CRM) y simulación de un día de 40 mensajes.
 
 ## Habilidades
 
@@ -40,12 +42,12 @@ leads calientes.
 
 Línea base: un asesor tarda 47 minutos en promedio en la primera respuesta (supuesto).
 
-## Cómo funciona en producción
+## Con Claude
 
-En la simulación la intención se detecta con palabras clave. En producción,
-Claude clasifica el mensaje y redacta la respuesta con el inventario real, y
-las palabras clave quedan como respaldo, igual que en los 5 agentes actuales.
-Se conecta con la API de WhatsApp Business y crea el lead en el CRM.
+Las reglas detectan la intención y los datos; si Claude está activo, redacta la
+respuesta con esos datos y los carros que encajan (sin prometer descuentos ni
+aprobaciones). Siguiente paso: conectarlo a la API de WhatsApp Business para
+que responda los mensajes reales.
 
 ## Límites
 

@@ -5,7 +5,8 @@ Ejecuta la simulación de los 4 agentes nuevos y guarda los resultados.
 
 Genera los datos simulados en simulacion/data/, los resultados de cada agente
 en simulacion/resultados/<agente>.json y un resumen en
-simulacion/resultados/resumen.md. Solo usa la librería estándar de Python.
+simulacion/resultados/resumen.md. Los agentes son los mismos que usa la API
+(backend/agents/), en su versión de cálculo puro: no necesitan base de datos.
 """
 
 from __future__ import annotations
@@ -15,12 +16,13 @@ import sys
 from pathlib import Path
 
 AQUI = Path(__file__).parent
-sys.path.insert(0, str(AQUI))
+sys.path.insert(0, str(AQUI.parent))
 
-import datos  # noqa: E402
-from agentes import alistamiento, atencion, credito, logistica  # noqa: E402
+from backend.agents import alistamiento, atencion, credito, logistica  # noqa: E402
+from backend.agents import datos_simulados as datos  # noqa: E402
 
 RESULTADOS = AQUI / "resultados"
+DATA = AQUI / "data"
 
 
 def _cop(v: float) -> str:
@@ -29,6 +31,9 @@ def _cop(v: float) -> str:
 
 def main() -> dict:
     d = datos.generar()
+    DATA.mkdir(exist_ok=True)
+    for clave, valor in d.items():
+        (DATA / f"{clave}.json").write_text(json.dumps(valor, ensure_ascii=False, indent=2), encoding="utf-8")
     res = {
         "logistica": logistica.analizar(d["sede"], d["citas"]),
         "alistamiento": alistamiento.analizar(d["alistamiento"]),

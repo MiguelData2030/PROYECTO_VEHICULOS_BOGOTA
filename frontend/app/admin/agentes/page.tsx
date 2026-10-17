@@ -3,8 +3,9 @@
 import { Suspense, useEffect, useState, type FormEvent } from 'react';
 import { useSearchParams } from 'next/navigation';
 import {
-  Bot, Calculator, Crosshair, Megaphone, Loader2, Sparkles, Cpu, ExternalLink, Copy, Check,
-  ThumbsUp, ThumbsDown, Zap, ArrowRight, Landmark, Handshake, AlertTriangle, MessageCircleMore,
+  Bot, Calculator, Crosshair, Megaphone, Loader2, Sparkles, Cpu, ExternalLink,
+  ThumbsUp, ThumbsDown, Zap, Landmark, Handshake, AlertTriangle, MessageCircleMore,
+  Route, Wrench, CreditCard, MessagesSquare,
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
@@ -12,23 +13,33 @@ import {
 import { canalInfo } from '@/lib/canales';
 import toast from 'react-hot-toast';
 import AdminShell from '@/components/AdminShell';
+import MarketingAgente from '@/components/agentes/MarketingAgente';
+import LogisticaAgente from '@/components/agentes/LogisticaAgente';
+import AlistamientoAgente from '@/components/agentes/AlistamientoAgente';
+import CreditoAgente from '@/components/agentes/CreditoAgente';
+import AtencionAgente from '@/components/agentes/AtencionAgente';
+import { Box, CopyBtn, F, Num } from '@/components/agentes/ui';
 import { formatCOP, formatCOPCompact, formatNumber, marcas } from '@/lib/data';
 import {
-  fetchAgentesEstado, valuarVehiculo, ejecutarCazador, generarMarketing, fetchInventario, updateVehiculo,
+  fetchAgentesEstado, valuarVehiculo, ejecutarCazador,
   ejecutarFinanciero, ejecutarVentas, type AnalisisFinanciero, type AnalisisVentas,
   apiErrorMessage, TRANSMISIONES, COMBUSTIBLES, TIPOS_VEHICULO,
   type AgentesEstado, type Valuacion, type ValuacionInput, type Caceria, type OportunidadCazada,
-  type TextosMarketing, type VehiculoAdmin, type VehiculoInput,
 } from '@/lib/api-admin';
 
-type Tab = 'valuador' | 'cazador' | 'marketing' | 'financiero' | 'ventas';
+type Tab = 'valuador' | 'cazador' | 'marketing' | 'financiero' | 'ventas'
+  | 'atencion' | 'credito' | 'logistica' | 'alistamiento';
 
-const TABS: { key: Tab; label: string; icon: typeof Bot; desc: string }[] = [
+const TABS: { key: Tab; label: string; icon: typeof Bot; desc: string; nuevo?: boolean }[] = [
   { key: 'valuador', label: 'Valuador', icon: Calculator, desc: 'Cuánto vale un carro, cuánto pagar como máximo y en cuánto venderlo' },
   { key: 'cazador', label: 'Cazador', icon: Crosshair, desc: 'Las mejores oportunidades de compra del mercado, priorizadas' },
-  { key: 'marketing', label: 'Marketing', icon: Megaphone, desc: 'Anuncio, descripción, post de Instagram y WhatsApp de un carro' },
+  { key: 'marketing', label: 'Marketing', icon: Megaphone, desc: 'Qué red vende, cuánto invertir, qué carros impulsar y el calendario de contenido' },
   { key: 'financiero', label: 'Financiero', icon: Landmark, desc: 'Flujo de caja, capital parado, rebajas y rentabilidad por marca' },
   { key: 'ventas', label: 'Ventas', icon: Handshake, desc: 'A quién llamar hoy, qué decirle y qué carros ofrecerle' },
+  { key: 'atencion', label: 'Atención 24/7', icon: MessagesSquare, desc: 'Responde WhatsApp y redes en segundos y califica cada lead', nuevo: true },
+  { key: 'credito', label: 'Crédito', icon: CreditCard, desc: 'Precalifica al comprador y busca cómo sí le alcanza', nuevo: true },
+  { key: 'logistica', label: 'Logística', icon: Route, desc: 'Rutas de peritajes, entregas y test drives a domicilio', nuevo: true },
+  { key: 'alistamiento', label: 'Alistamiento', icon: Wrench, desc: 'Orden del taller, cuello de botella y sobrecostos', nuevo: true },
 ];
 
 const EMPTY_VAL: ValuacionInput = {
@@ -63,7 +74,7 @@ function Agentes() {
   };
 
   return (
-    <AdminShell title="Agentes IA" subtitle="Tu equipo de análisis: valuación, cacería de oportunidades y marketing">
+    <AdminShell title="Agentes IA" subtitle="Tu equipo de 9 agentes: comprar, vender, financiar, mover y alistar">
       <div className={`card p-4 mb-6 flex items-start gap-3 ${estado?.ia_activa ? 'border-green-500/30' : ''}`}>
         {estado?.ia_activa ? <Sparkles className="w-5 h-5 text-green-400 mt-0.5" /> : <Cpu className="w-5 h-5 text-primary mt-0.5" />}
         <p className="text-sm text-gray-300">
@@ -73,8 +84,8 @@ function Agentes() {
         </p>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-8">
-        {TABS.map(({ key, label, icon: Icon, desc }) => (
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 mb-8">
+        {TABS.map(({ key, label, icon: Icon, desc, nuevo }) => (
           <button
             key={key}
             onClick={() => setTab(key)}
@@ -83,6 +94,7 @@ function Agentes() {
             <div className="flex items-center gap-2 mb-1">
               <Icon className={`w-5 h-5 ${tab === key ? 'text-primary' : 'text-gray-400'}`} />
               <span className="text-white font-semibold">Agente {label}</span>
+              {nuevo && <span className="ml-auto text-[10px] uppercase tracking-wider text-primary border border-primary/40 rounded px-1.5">Nuevo</span>}
             </div>
             <p className="text-gray-500 text-xs">{desc}</p>
           </button>
@@ -91,9 +103,13 @@ function Agentes() {
 
       {tab === 'valuador' && <Valuador form={valForm} setForm={setValForm} autoRun={valAuto} />}
       {tab === 'cazador' && <Cazador onValuar={valuarOportunidad} />}
-      {tab === 'marketing' && <Marketing vehiculoInicial={Number(params.get('vehiculo')) || null} />}
+      {tab === 'marketing' && <MarketingAgente vehiculoInicial={Number(params.get('vehiculo')) || null} />}
       {tab === 'financiero' && <Financiero />}
       {tab === 'ventas' && <Ventas />}
+      {tab === 'atencion' && <AtencionAgente />}
+      {tab === 'credito' && <CreditoAgente />}
+      {tab === 'logistica' && <LogisticaAgente />}
+      {tab === 'alistamiento' && <AlistamientoAgente />}
     </AdminShell>
   );
 }
@@ -344,104 +360,6 @@ function Cazador({ onValuar }: { onValuar: (o: OportunidadCazada) => void }) {
 // Marketing
 // ---------------------------------------------------------------------------
 
-function Marketing({ vehiculoInicial }: { vehiculoInicial: number | null }) {
-  const [vehiculos, setVehiculos] = useState<VehiculoAdmin[]>([]);
-  const [vid, setVid] = useState<number | null>(vehiculoInicial);
-  const [loading, setLoading] = useState(false);
-  const [res, setRes] = useState<TextosMarketing | null>(null);
-
-  useEffect(() => { fetchInventario().then((all) => setVehiculos(all.filter((v) => v.estado !== 'vendido'))); }, []);
-  useEffect(() => { if (vehiculoInicial) run(vehiculoInicial); }, [vehiculoInicial]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  async function run(id = vid) {
-    if (!id) return;
-    setLoading(true);
-    try {
-      setRes(await generarMarketing(id));
-    } catch (e) {
-      toast.error(apiErrorMessage(e, 'No se pudieron generar los textos'));
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  const usarDescripcion = async () => {
-    if (!vid || !res) return;
-    try {
-      await updateVehiculo(vid, { descripcion: res.descripcion } as Partial<VehiculoInput>);
-      toast.success('Descripción actualizada en el catálogo');
-    } catch (e) {
-      toast.error(apiErrorMessage(e, 'No se pudo guardar'));
-    }
-  };
-
-  return (
-    <div className="space-y-6">
-      <div className="card p-5 flex flex-col md:flex-row gap-3 md:items-end">
-        <F label="Vehículo del inventario">
-          <select value={vid ?? ''} onChange={(e) => setVid(Number(e.target.value))} className="select-field py-2 md:min-w-[420px]">
-            <option value="" disabled>Elige un vehículo</option>
-            {vehiculos.map((v) => <option key={v.id} value={v.id}>{v.marca} {v.modelo} {v.año} — {v.precio_venta ? formatCOP(v.precio_venta) : 's/precio'}</option>)}
-          </select>
-        </F>
-        <button onClick={() => run()} disabled={!vid || loading} className="btn-primary flex items-center gap-2 disabled:opacity-50">
-          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Megaphone className="w-4 h-4" />} Generar textos
-        </button>
-      </div>
-
-      {res && !loading && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <Texto titulo="Título para TuCarro / Carroya" texto={res.titulo} />
-          <Texto titulo="Mensaje de WhatsApp" texto={res.whatsapp} />
-          <Texto
-            titulo="Descripción para el catálogo"
-            texto={res.descripcion}
-            extra={<button onClick={usarDescripcion} className="btn-ghost text-xs flex items-center gap-1 px-2 py-1"><ArrowRight className="w-3 h-3" /> Usar en el catálogo</button>}
-          />
-          <Texto titulo="Post de Instagram" texto={res.instagram} />
-          <p className="text-xs text-gray-500 lg:col-span-2 flex items-center gap-1">
-            {res.analisis_ia ? <><Sparkles className="w-3 h-3 text-green-400" /> Redactado por Claude.</> : <><Cpu className="w-3 h-3" /> Plantilla con los datos reales del vehículo (activa Claude para textos más persuasivos).</>}
-          </p>
-        </div>
-      )}
-      {loading && <div className="card p-10 flex justify-center"><Loader2 className="w-8 h-8 text-primary animate-spin" /></div>}
-      {!res && !loading && (
-        <div className="card p-10 text-center text-gray-500">
-          <Megaphone className="w-10 h-10 mx-auto mb-3" />
-          Elige un carro y genera su anuncio. También puedes abrirlo desde Inventario con el botón de megáfono.
-        </div>
-      )}
-    </div>
-  );
-}
-
-function Texto({ titulo, texto, extra }: { titulo: string; texto: string; extra?: React.ReactNode }) {
-  const [copiado, setCopiado] = useState(false);
-  const copiar = async () => {
-    try {
-      await navigator.clipboard.writeText(texto);
-      setCopiado(true);
-      setTimeout(() => setCopiado(false), 1500);
-    } catch {
-      toast.error('No se pudo copiar');
-    }
-  };
-  return (
-    <div className="card p-4 flex flex-col">
-      <div className="flex items-center justify-between mb-2">
-        <p className="text-primary text-xs font-semibold uppercase tracking-wider">{titulo}</p>
-        <div className="flex gap-1">
-          {extra}
-          <button onClick={copiar} className="btn-ghost text-xs flex items-center gap-1 px-2 py-1">
-            {copiado ? <Check className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3" />} {copiado ? 'Copiado' : 'Copiar'}
-          </button>
-        </div>
-      </div>
-      <p className="text-sm text-gray-200 whitespace-pre-wrap leading-relaxed">{texto}</p>
-    </div>
-  );
-}
-
 // ---------------------------------------------------------------------------
 // Financiero
 // ---------------------------------------------------------------------------
@@ -671,56 +589,6 @@ function Ventas() {
         })}
         {r.prioridades.length === 0 && <div className="card p-10 text-center text-gray-500">No hay negocios abiertos en el CRM.</div>}
       </div>
-    </div>
-  );
-}
-
-function CopyBtn({ texto }: { texto: string }) {
-  const [ok, setOk] = useState(false);
-  return (
-    <button
-      onClick={async () => { try { await navigator.clipboard.writeText(texto); setOk(true); setTimeout(() => setOk(false), 1500); } catch { toast.error('No se pudo copiar'); } }}
-      className="btn-ghost text-xs px-2 py-1 flex items-center gap-1"
-    >
-      {ok ? <Check className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3" />}
-    </button>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Small UI helpers
-// ---------------------------------------------------------------------------
-
-function F({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="w-full">
-      <label className="block text-gray-400 text-xs mb-1">{label}</label>
-      {children}
-    </div>
-  );
-}
-
-function Num({ value, onChange, money }: { value: number | null; onChange: (v: number | null) => void; money?: boolean }) {
-  return (
-    <input
-      inputMode="numeric"
-      value={value !== null ? formatNumber(value) : ''}
-      onChange={(e) => {
-        const d = e.target.value.replace(/\D/g, '');
-        onChange(d === '' ? null : Number(d));
-      }}
-      placeholder={money ? '$ 0' : '0'}
-      className="input-field py-2"
-    />
-  );
-}
-
-function Box({ label, value, sub, accent = 'text-white' }: { label: string; value: string; sub?: string; accent?: string }) {
-  return (
-    <div className="card p-3">
-      <p className="text-gray-500 text-xs">{label}</p>
-      <p className={`text-lg font-bold break-words ${accent}`}>{value}</p>
-      {sub && <p className="text-gray-500 text-xs mt-0.5">{sub}</p>}
     </div>
   );
 }

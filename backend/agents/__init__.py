@@ -1,7 +1,8 @@
-from .cazador import AgenteCazador
-from .financiero import AgenteFinanciero
-from .marketing import AgenteMarketing
-from .valuador import AgenteValuador
-from .ventas import AgenteVentas
+"""
+AutoNegocio AI agents.
 
-__all__ = ["AgenteCazador", "AgenteFinanciero", "AgenteMarketing", "AgenteValuador", "AgenteVentas"]
+Import each agent from its own module (backend.agents.valuador, ...): the
+operations agents (logistica, alistamiento, credito, atencion) are pure
+Python with no database access, so the simulation in simulacion/ can use
+them without a configured database.
+"""

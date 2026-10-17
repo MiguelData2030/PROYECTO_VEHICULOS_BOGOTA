@@ -34,7 +34,7 @@ def simular(carros: list[dict], politica: str, capacidad: dict | None = None) ->
     """Simulación día a día del taller. politica = 'fifo' | 'agente'."""
     capacidad = capacidad or CAPACIDAD
     estado = {c["id"]: {"pendiente": [t for t in sorted(c["tareas"], key=lambda t: ORDEN.index(t["tarea"]))],
-                        "en_curso": None, "resta": 0, "listo": None} for c in carros}
+                        "en_curso": None, "resta": 0, "listo": None, "tramos": []} for c in carros}
     por_id = {c["id"]: c for c in carros}
     dia = 0
     while any(e["listo"] is None for e in estado.values()) and dia < 200:
@@ -57,6 +57,7 @@ def simular(carros: list[dict], politica: str, capacidad: dict | None = None) ->
             if ocupados[area] < capacidad[area]:
                 tarea = estado[cid]["pendiente"].pop(0)
                 estado[cid]["en_curso"], estado[cid]["resta"] = area, tarea["dias"]
+                estado[cid]["tramos"].append({"area": NOMBRE[area], "desde": dia, "hasta": dia + tarea["dias"]})
                 ocupados[area] += 1
         # 3. avanzar un día
         for e in estado.values():
@@ -71,7 +72,8 @@ def simular(carros: list[dict], politica: str, capacidad: dict | None = None) ->
         costo_capital += costo
         dias_tot += dias
         detalle.append({"id": c["id"], "vehiculo": c["vehiculo"], "liquidez": c["liquidez"],
-                        "dia_listo": estado[c["id"]]["listo"], "dias_en_taller": dias, "costo_capital": round(costo, -3)})
+                        "dia_compra": c["dia_compra"], "dia_listo": estado[c["id"]]["listo"], "dias_en_taller": dias,
+                        "costo_capital": round(costo, -3), "tramos": estado[c["id"]]["tramos"]})
     alta = [d["dias_en_taller"] for d in detalle if d["liquidez"] == "alta"]
     return {
         "dias_promedio": round(dias_tot / len(carros), 1),
@@ -82,8 +84,9 @@ def simular(carros: list[dict], politica: str, capacidad: dict | None = None) ->
     }
 
 
-def analizar(carros: list[dict]) -> dict:
-    base, agente = simular(carros, "fifo"), simular(carros, "agente")
+def analizar(carros: list[dict], capacidad: dict | None = None) -> dict:
+    cap = {a: max(1, int((capacidad or {}).get(a, n))) for a, n in CAPACIDAD.items()}
+    base, agente = simular(carros, "fifo", cap), simular(carros, "agente", cap)
     sobrecostos = []
     for c in carros:
         costo = sum(t["costo"] for t in c["tareas"])
@@ -93,16 +96,18 @@ def analizar(carros: list[dict]) -> dict:
                                 "exceso": costo - c["presupuesto_alistamiento"],
                                 "tareas": [NOMBRE[t["tarea"]] for t in c["tareas"] if t["costo"]]})
     sobrecostos.sort(key=lambda s: -s["exceso"])
-    carga = {NOMBRE[a]: sum(t["dias"] for c in carros for t in c["tareas"] if t["tarea"] == a) / CAPACIDAD[a]
+    carga = {NOMBRE[a]: sum(t["dias"] for c in carros for t in c["tareas"] if t["tarea"] == a) / cap[a]
              for a in ORDEN}
     cuello = max(carga, key=carga.get)
     # Escenario recomendado: un cupo más en el área cuello de botella
     # (p. ej. un taller de pintura aliado), con la misma regla de prioridad
     area_cuello = next(a for a in ORDEN if NOMBRE[a] == cuello)
-    ampliado = simular(carros, "agente", {**CAPACIDAD, area_cuello: CAPACIDAD[area_cuello] + 1})
+    ampliado = simular(carros, "agente", {**cap, area_cuello: cap[area_cuello] + 1})
     primeros = [d["vehiculo"] for d in agente["detalle"][:3]]
     return {
         "carros": len(carros),
+        "capacidad": cap,
+        "areas": [{"clave": a, "nombre": NOMBRE[a]} for a in ORDEN],
         "linea_base": {k: v for k, v in base.items() if k != "detalle"},
         "agente": {k: v for k, v in agente.items() if k != "detalle"},
         "ahorro": {
@@ -120,9 +125,10 @@ def analizar(carros: list[dict]) -> dict:
         "cuello_botella": {"area": cuello, "dias_de_trabajo_por_cupo": round(carga[cuello], 1)},
         "recomendacion": (
             f"Alistar primero {', '.join(primeros)}. El cuello de botella es {cuello} "
-            f"({carga[cuello]:.0f} días de trabajo por cupo): un segundo cupo ahí acelera todo el flujo. "
+            f"({carga[cuello]:.0f} días de trabajo por cupo): un cupo más ahí deja cada carro listo "
+            f"{round(base['dias_promedio'] - ampliado['dias_promedio'], 1)} días antes en promedio. "
             f"{len(sobrecostos)} carro(s) superan el presupuesto de alistamiento que se usó al comprarlos: revisar el peritaje de compra."
         ),
         "supuestos": "Costo del capital 1,5 % mensual; capacidades por área: "
-                     + ", ".join(f"{NOMBRE[a]} {n}" for a, n in CAPACIDAD.items()) + " carros a la vez.",
+                     + ", ".join(f"{NOMBRE[a]} {n}" for a, n in cap.items()) + " carros a la vez.",
     }

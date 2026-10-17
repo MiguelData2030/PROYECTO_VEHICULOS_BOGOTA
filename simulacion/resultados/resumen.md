@@ -12,13 +12,13 @@ Datos 100 % simulados (semilla 2026); cada ejecución da los mismos números.
 ## Recomendaciones de cada agente
 
 - **Logística:** Con 2 conductores las 18 citas se cubren en 108.0 km y 19.7 horas, con 0 llegadas tarde (antes: 191.2 km, 25.3 horas y 5 llegadas tarde).
-- **Alistamiento:** Alistar primero Mazda CX-5 2022, Toyota Corolla Cross 2022, Nissan Kicks 2021. El cuello de botella es latonería y pintura (21 días de trabajo por cupo): un segundo cupo ahí acelera todo el flujo. 6 carro(s) superan el presupuesto de alistamiento que se usó al comprarlos: revisar el peritaje de compra.
+- **Alistamiento:** Alistar primero Mazda CX-5 2022, Toyota Corolla Cross 2022, Nissan Kicks 2021. El cuello de botella es latonería y pintura (21 días de trabajo por cupo): un cupo más ahí deja cada carro listo 2.0 días antes en promedio. 6 carro(s) superan el presupuesto de alistamiento que se usó al comprarlos: revisar el peritaje de compra.
 - **Crédito:** De 25 solicitudes, 18 pueden terminar en venta (10 tal cual, 2 subiendo la inicial y 6 con otro carro). Con solo el plazo estándar serían 7.
 - **Atención:** El agente respondió solo 33 de 40 mensajes en menos de 1 minuto, incluidos 10 que llegaron fuera del horario de atención. Detectó 15 leads calientes para que un asesor los llame primero y pasó 7 (quejas o mensajes dudosos) a una persona.
 
 ## Supuestos
 
-- Logística: Velocidad 20 km/h; calles = línea recta × 1,35; $1.100 por km y $18.000 por hora de conductor; 22 días al mes.
+- Logística: Velocidad 20 km/h; calles = línea recta × 1,35; $1.100 por km y $18.000 por hora de conductor; 22 días al mes; salida 08:00.
 - Alistamiento: Costo del capital 1,5 % mensual; capacidades por área: mecánica 2, latonería y pintura 1, llantas 1, lavado 2, fotos 2 carros a la vez.
 - Crédito: Tasas E.A.: 16,5 % (puntaje ≥ 750), 19,5 % (≥ 650), 24 % (≥ 550); endeudamiento máximo 40 % del ingreso (35 % independientes); financiación hasta el 90 %; plazos 48 a 72 meses. Es una precalificación: la aprobación final es del banco.
 - Atención: Primera respuesta de un asesor: 47 minutos en promedio. La precisión se mide contra mensajes simulados; con mensajes reales será menor con palabras clave y mayor con Claude.

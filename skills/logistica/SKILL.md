@@ -3,10 +3,12 @@ name: agente-logistica
 description: Arma las rutas del día para peritajes a domicilio, entregas de carros vendidos y test drives en Bogotá - reparte las citas entre conductores por zona, respeta la ventana horaria de cada cliente y acorta los recorridos. Úsalo la noche anterior para planear el día siguiente.
 ---
 
-# Agente de Logística (nuevo, simulado)
+# Agente de Logística
 
 **Rol:** jefe de despacho que planea la ruta de cada conductor.
-**Código:** `simulacion/agentes/logistica.py` · **Datos de prueba:** `simulacion/data/citas.json`
+**Código:** `backend/agents/logistica.py` · **API:** `GET /agentes/logistica/agenda`, `POST /agentes/logistica`
+**En el panel:** Admin → Agentes IA → Agente Logística: agenda editable (agregar o quitar citas), número
+de conductores, mapa de rutas e itinerario de cada conductor. La agenda de ejemplo es simulada.
 
 ## Habilidades
 
@@ -47,7 +49,7 @@ esperas, llegadas tarde, comparación con la línea base y ahorro mensual.
 
 Ahorro: 43,5 % de km y unos $4.246.000 al mes.
 
-## Para llevarlo a producción
+## Siguiente paso
 
 Tomar las citas del CRM (etapa "cita"), geocodificar direcciones (API de mapas)
 y enviar la ruta a cada conductor por WhatsApp. Con tráfico real conviene usar
