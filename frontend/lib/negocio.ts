@@ -20,14 +20,27 @@ export const NEGOCIO = {
   horario: process.env.NEXT_PUBLIC_HORARIO || 'Lun - Sáb: 8:00 AM - 6:00 PM',
 };
 
-/** Link de WhatsApp con mensaje prellenado. */
+/** Perfiles en redes (URL completa). Los que no estén configurados no se muestran. */
+export const REDES = [
+  { red: 'instagram', label: 'Instagram', url: process.env.NEXT_PUBLIC_INSTAGRAM || '' },
+  { red: 'facebook', label: 'Facebook', url: process.env.NEXT_PUBLIC_FACEBOOK || '' },
+  { red: 'tiktok', label: 'TikTok', url: process.env.NEXT_PUBLIC_TIKTOK || '' },
+].filter((r) => r.url);
+
+/**
+ * Link de WhatsApp con mensaje prellenado. Sin número configurado lleva a la
+ * página de contacto (wa.me sin número abre WhatsApp sin destinatario).
+ */
 export function whatsappUrl(mensaje?: string): string {
+  if (!NEGOCIO.whatsapp) return '/contacto/';
   const base = `https://wa.me/${NEGOCIO.whatsapp}`;
   return mensaje ? `${base}?text=${encodeURIComponent(mensaje)}` : base;
 }
 
-export function telUrl(): string {
+/** Link para llamar, o null si no hay teléfono ni WhatsApp configurado. */
+export function telUrl(): string | null {
   const num = digits(NEGOCIO.telefono) || NEGOCIO.whatsapp;
+  if (!num) return null;
   return `tel:+${num.length === 10 ? '57' + num : num}`;
 }
 

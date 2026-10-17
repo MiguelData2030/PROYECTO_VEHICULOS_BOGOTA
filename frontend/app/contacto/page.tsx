@@ -10,7 +10,7 @@ import {
   Send,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { NEGOCIO, whatsappUrl, mapsUrl } from '@/lib/negocio';
+import { NEGOCIO, REDES, whatsappUrl, mapsUrl } from '@/lib/negocio';
 
 const contactInfo = [
   {
@@ -243,30 +243,59 @@ export default function ContactoPage() {
           {/* Sidebar */}
           <div className="lg:col-span-2">
             <div className="card p-6 sm:p-8 sticky top-24">
-              <h3 className="text-white font-display font-bold text-xl mb-4">
-                Atención rápida por WhatsApp
-              </h3>
-              <p className="text-gray-400 text-sm leading-relaxed mb-6">
-                Para una respuesta inmediata, escríbenos por WhatsApp. Nuestro equipo está
-                disponible de lunes a sábado de 8am a 6pm.
-              </p>
-              <a
-                href={whatsappUrl('Hola, quiero información')}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn-primary flex items-center justify-center gap-2 w-full"
-              >
-                <MessageCircle className="w-5 h-5" />
-                Escribir por WhatsApp
-              </a>
+              {NEGOCIO.whatsapp ? (
+                <>
+                  <h3 className="text-white font-display font-bold text-xl mb-4">
+                    Atención rápida por WhatsApp
+                  </h3>
+                  <p className="text-gray-400 text-sm leading-relaxed mb-6">
+                    Para una respuesta inmediata, escríbenos por WhatsApp. Nuestro equipo está
+                    disponible de lunes a sábado de 8am a 6pm.
+                  </p>
+                  <a
+                    href={whatsappUrl('Hola, quiero información')}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn-primary flex items-center justify-center gap-2 w-full"
+                  >
+                    <MessageCircle className="w-5 h-5" />
+                    Escribir por WhatsApp
+                  </a>
+                </>
+              ) : (
+                <>
+                  <h3 className="text-white font-display font-bold text-xl mb-4">
+                    Te respondemos pronto
+                  </h3>
+                  <p className="text-gray-400 text-sm leading-relaxed">
+                    Déjanos tu mensaje en el formulario y un asesor te contactará en menos
+                    de 24 horas. Horario: {NEGOCIO.horario}.
+                  </p>
+                </>
+              )}
 
-              <div className="mt-8 pt-6 border-t border-border">
-                <h4 className="text-white font-semibold mb-3">Síguenos</h4>
-                <p className="text-gray-400 text-sm">
-                  Encuéntranos en redes sociales para ver nuestros últimos vehículos
-                  y promociones.
-                </p>
-              </div>
+              {REDES.length > 0 && (
+                <div className="mt-8 pt-6 border-t border-border">
+                  <h4 className="text-white font-semibold mb-3">Síguenos</h4>
+                  <p className="text-gray-400 text-sm mb-4">
+                    Encuéntranos en redes sociales para ver nuestros últimos vehículos
+                    y promociones.
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {REDES.map((r) => (
+                      <a
+                        key={r.red}
+                        href={r.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn-secondary text-sm px-4 py-2"
+                      >
+                        {r.label}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

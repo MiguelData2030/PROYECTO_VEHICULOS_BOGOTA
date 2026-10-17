@@ -58,3 +58,10 @@ services:
         sync: false
       - key: NEXT_PUBLIC_DIRECCION
         value: Bogotá, Colombia
+      # Full profile URLs; leave empty to hide that network's icon
+      - key: NEXT_PUBLIC_INSTAGRAM
+        sync: false
+      - key: NEXT_PUBLIC_FACEBOOK
+        sync: false
+      - key: NEXT_PUBLIC_TIKTOK
+        sync: false

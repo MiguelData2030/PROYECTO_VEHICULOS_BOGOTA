@@ -29,6 +29,7 @@ En el proyecto `VEHICULOS_BOGOTA`:
 3. Render muestra los 2 servicios y pide los valores marcados:
    - `DATABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` (paso 1)
    - `NEXT_PUBLIC_WHATSAPP` (ej. `573001234567`), `NEXT_PUBLIC_EMAIL`, `NEXT_PUBLIC_TELEFONO` (opcional)
+   - `NEXT_PUBLIC_INSTAGRAM`, `NEXT_PUBLIC_FACEBOOK`, `NEXT_PUBLIC_TIKTOK` (opcional; URL completa del perfil)
    - `ANTHROPIC_API_KEY` (opcional; déjalo vacío si no usas los agentes IA)
 4. **Apply**. En ~5 minutos quedan:
    - Web: `https://autonegocio-web.onrender.com`

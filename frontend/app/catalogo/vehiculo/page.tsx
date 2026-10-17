@@ -64,9 +64,8 @@ function VehiculoDetalle() {
       ? [vehicle.imagen]
       : [];
 
-  const whatsappMsg = encodeURIComponent(
-    `Hola, estoy interesado en el ${vehicle.marca} ${vehicle.modelo} ${vehicle.anio} publicado en su web. ¿Está disponible?`
-  );
+  const whatsappMsg =
+    `Hola, estoy interesado en el ${vehicle.marca} ${vehicle.modelo} ${vehicle.anio} publicado en su web. ¿Está disponible?`;
 
   const docs = [
     { label: 'SOAT vigente', ok: vehicle.soat, icon: ShieldCheck },
@@ -225,7 +224,7 @@ function VehiculoDetalle() {
               {/* Contact Buttons */}
               <div className="space-y-3">
                 <a
-                  href={`${whatsappUrl()}?text=${whatsappMsg}`}
+                  href={whatsappUrl(whatsappMsg)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn-primary w-full flex items-center justify-center gap-2 text-base py-3"
@@ -233,13 +232,15 @@ function VehiculoDetalle() {
                   <MessageCircle className="w-5 h-5" />
                   Consultar por WhatsApp
                 </a>
-                <a
-                  href={telUrl()}
-                  className="btn-secondary w-full flex items-center justify-center gap-2 text-base py-3"
-                >
-                  <Phone className="w-5 h-5" />
-                  Llamar ahora
-                </a>
+                {telUrl() && (
+                  <a
+                    href={telUrl()!}
+                    className="btn-secondary w-full flex items-center justify-center gap-2 text-base py-3"
+                  >
+                    <Phone className="w-5 h-5" />
+                    Llamar ahora
+                  </a>
+                )}
               </div>
 
               <p className="text-xs text-gray-500 text-center mt-4">

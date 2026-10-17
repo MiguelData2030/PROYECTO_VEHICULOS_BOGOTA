@@ -114,7 +114,7 @@ export default function CotizaPage() {
             </div>
             <label className="flex items-start gap-2 text-xs text-gray-400 mt-3 cursor-pointer">
               <input type="checkbox" checked={form.acepta_contacto} onChange={(e) => set('acepta_contacto', e.target.checked)} className="accent-primary mt-0.5" />
-              Autorizo a AutoNegocio a tratar mis datos personales para contactarme con una oferta por mi vehículo (Ley 1581 de 2012).
+              Autorizo a AutoNegocio a tratar mis datos personales para contactarme con una oferta por mi vehículo (Ley 1581 de 2012, ver <a href="/privacidad/" target="_blank" className="text-primary underline">política de datos</a>).
             </label>
           </div>
 

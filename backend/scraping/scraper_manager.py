@@ -46,7 +46,9 @@ TIPO_SCORE: dict[str, int] = {
     "sedan":     5,
 }
 POPULAR_COLORS = {"blanco", "gris", "negro", "plata", "plateado", "silver"}
-CURRENT_YEAR = 2026
+CURRENT_YEAR = datetime.now().year
+# Comparable listings needed before a market price is trusted
+MIN_COMPARABLES = 3
 
 
 # ---------------------------------------------------------------------------
@@ -136,6 +138,20 @@ class ScraperManager:
         # --- Score and persist ---
         oportunidades: list[Oportunidad] = []
         async with AsyncSessionLocal() as session:
+            # Pass 1: store every listing first, so each one is compared with
+            # the whole current scan (not only with previous scans). Without
+            # this the first scan had no market prices and every score was low.
+            for listing in unique_listings:
+                try:
+                    await self._save_listing(session, listing, 0.0, None)
+                except Exception as exc:
+                    self.logger.error(
+                        "Error storing listing %s: %s",
+                        listing.get("url", "?"), exc,
+                    )
+            await session.flush()
+
+            # Pass 2: market price (excluding the listing itself) and score
             for listing in unique_listings:
                 try:
                     market_price = await self._get_market_price(
@@ -143,6 +159,7 @@ class ScraperManager:
                         listing.get("marca"),
                         listing.get("modelo"),
                         listing.get("año"),
+                        exclude_url=listing.get("url"),
                     )
                     score = self.calculate_score(listing, market_price)
                     op = Oportunidad(listing, score, market_price)
@@ -287,64 +304,37 @@ class ScraperManager:
         marca: Optional[str],
         modelo: Optional[str],
         año: Optional[int],
+        exclude_url: Optional[str] = None,
     ) -> Optional[int]:
         """
         Return the average asking price of comparable listings already
-        collected in the oportunidades table for marca/modelo/año.
+        collected in the oportunidades table: same marca/modelo and año, falling
+        back to año ± 1. The listing being scored (``exclude_url``) is left out
+        so it does not dilute its own discount.
 
-        Falls back to brand+year average, then brand average.
+        There is no brand-wide fallback: averaging a Yaris with a Fortuner
+        produced fake 50 % "discounts". Without at least MIN_COMPARABLES
+        comparables the price is unknown (None) and the score ignores it.
         """
-        if not marca:
+        if not (marca and modelo and año):
             return None
+        not_self = [OportunidadDB.url != exclude_url] if exclude_url else []
 
-        # Exact match: marca + modelo + año
-        if marca and modelo and año:
+        for años in ((int(año), int(año)), (int(año) - 1, int(año) + 1)):
             result = await session.execute(
-                select(func.avg(OportunidadDB.precio_publicado)).where(
+                select(func.avg(OportunidadDB.precio_publicado), func.count(OportunidadDB.id)).where(
                     OportunidadDB.marca.ilike(marca),
                     OportunidadDB.modelo.ilike(modelo),
-                    OportunidadDB.año == int(año),
+                    OportunidadDB.año.between(*años),
                     OportunidadDB.precio_publicado.isnot(None),
+                    *not_self,
                 )
             )
-            avg = result.scalar()
-            if avg:
+            avg, n = result.one()
+            if avg and n >= MIN_COMPARABLES:
                 self.logger.debug(
-                    "Market price for %s %s %s: %.0f COP (exact match)",
-                    marca, modelo, año, avg,
-                )
-                return int(avg)
-
-        # Fallback: marca + año ± 1 year
-        if marca and año:
-            result = await session.execute(
-                select(func.avg(OportunidadDB.precio_publicado)).where(
-                    OportunidadDB.marca.ilike(marca),
-                    OportunidadDB.año.between(int(año) - 1, int(año) + 1),
-                    OportunidadDB.precio_publicado.isnot(None),
-                )
-            )
-            avg = result.scalar()
-            if avg:
-                self.logger.debug(
-                    "Market price for %s %s: %.0f COP (year ±1 fallback)",
-                    marca, año, avg,
-                )
-                return int(avg)
-
-        # Last resort: brand average
-        if marca:
-            result = await session.execute(
-                select(func.avg(OportunidadDB.precio_publicado)).where(
-                    OportunidadDB.marca.ilike(marca),
-                    OportunidadDB.precio_publicado.isnot(None),
-                )
-            )
-            avg = result.scalar()
-            if avg:
-                self.logger.debug(
-                    "Market price for %s: %.0f COP (brand average fallback)",
-                    marca, avg,
+                    "Market price for %s %s %s: %.0f COP (%d comparables, años %s)",
+                    marca, modelo, año, avg, n, años,
                 )
                 return int(avg)
 

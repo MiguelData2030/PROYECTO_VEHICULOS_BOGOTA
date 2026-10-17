@@ -1,8 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { Car, MapPin, Phone, Mail, Clock, Facebook, Instagram, Youtube } from 'lucide-react';
-import { NEGOCIO } from '@/lib/negocio';
+import { Car, MapPin, Phone, Mail, Clock, Facebook, Instagram, Music2 } from 'lucide-react';
+import { NEGOCIO, REDES } from '@/lib/negocio';
+
+const REDES_ICON = { instagram: Instagram, facebook: Facebook, tiktok: Music2 } as const;
 
 export default function Footer() {
   return (
@@ -23,17 +25,25 @@ export default function Footer() {
               Tu aliado confiable para la compra y venta de vehículos usados premium en Bogotá.
               Garantía, financiación y total transparencia.
             </p>
-            <div className="flex items-center gap-3 mt-4">
-              <a href="#" className="w-9 h-9 rounded-lg bg-dark flex items-center justify-center text-gray-400 hover:text-primary hover:bg-primary/10 transition-all">
-                <Facebook className="w-4 h-4" />
-              </a>
-              <a href="#" className="w-9 h-9 rounded-lg bg-dark flex items-center justify-center text-gray-400 hover:text-primary hover:bg-primary/10 transition-all">
-                <Instagram className="w-4 h-4" />
-              </a>
-              <a href="#" className="w-9 h-9 rounded-lg bg-dark flex items-center justify-center text-gray-400 hover:text-primary hover:bg-primary/10 transition-all">
-                <Youtube className="w-4 h-4" />
-              </a>
-            </div>
+            {REDES.length > 0 && (
+              <div className="flex items-center gap-3 mt-4">
+                {REDES.map((r) => {
+                  const Icon = REDES_ICON[r.red as keyof typeof REDES_ICON];
+                  return (
+                    <a
+                      key={r.red}
+                      href={r.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={r.label}
+                      className="w-9 h-9 rounded-lg bg-dark flex items-center justify-center text-gray-400 hover:text-primary hover:bg-primary/10 transition-all"
+                    >
+                      <Icon className="w-4 h-4" />
+                    </a>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Quick Links */}
@@ -100,8 +110,7 @@ export default function Footer() {
             &copy; {new Date().getFullYear()} AutoNegocio. Todos los derechos reservados.
           </p>
           <div className="flex items-center gap-4 text-sm text-gray-500">
-            <a href="#" className="hover:text-gray-300 transition-colors">Política de Privacidad</a>
-            <a href="#" className="hover:text-gray-300 transition-colors">Términos y Condiciones</a>
+            <Link href="/privacidad" className="hover:text-gray-300 transition-colors">Política de tratamiento de datos</Link>
           </div>
         </div>
       </div>

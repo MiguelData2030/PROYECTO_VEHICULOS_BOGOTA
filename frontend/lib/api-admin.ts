@@ -7,11 +7,24 @@ const api = axios.create({
   timeout: 15000,
 });
 
-// Attach the admin JWT to every request
+/**
+ * No session → go to login. Returns a promise that never settles: the page is
+ * being left, so its catch blocks must not flash "Error cargando datos…".
+ */
+function toLogin(): Promise<never> {
+  localStorage.removeItem('token');
+  if (!window.location.pathname.startsWith('/login')) {
+    window.location.href = '/login';
+  }
+  return new Promise(() => {});
+}
+
+// Attach the admin JWT to every request; without one, don't even call the API
 api.interceptors.request.use((config) => {
   if (typeof window !== 'undefined') {
     const token = localStorage.getItem('token');
-    if (token) config.headers.Authorization = `Bearer ${token}`;
+    if (!token) return toLogin();
+    config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
@@ -21,10 +34,7 @@ api.interceptors.response.use(
   (res) => res,
   (error) => {
     if (typeof window !== 'undefined' && error?.response?.status === 401) {
-      localStorage.removeItem('token');
-      if (!window.location.pathname.startsWith('/login')) {
-        window.location.href = '/login';
-      }
+      return toLogin();
     }
     return Promise.reject(error);
   },

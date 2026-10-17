@@ -59,9 +59,12 @@ function Ventas() {
 
   const filtradas = useMemo(() => {
     if (periodo === '12m') {
-      const desde = new Date();
-      desde.setMonth(desde.getMonth() - 12);
-      return ventas.filter((v) => new Date(v.fecha) >= desde);
+      // Same window as the dashboard: current month + the 11 before it
+      const d = new Date();
+      d.setDate(1);
+      d.setMonth(d.getMonth() - 11);
+      const desde = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      return ventas.filter((v) => v.fecha.slice(0, 7) >= desde);
     }
     if (periodo === 'todo') return ventas;
     return ventas.filter((v) => v.fecha.startsWith(periodo));
