@@ -30,24 +30,29 @@ export default function AdminDashboard() {
   const [demoBusy, setDemoBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [scraping, setScraping] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const loadData = async () => {
     setLoading(true);
+    setError(null);
     try {
-      const [s, inv, ops, k, d] = await Promise.all([
+      // One failing request must not blank the whole dashboard
+      const [s, inv, ops, k, d] = await Promise.allSettled([
         fetchEstadisticas(),
         fetchInventario(),
         fetchOportunidadesTop(),
         fetchDashboardKPIs(),
         fetchDemoEstado(),
       ]);
-      setStats(s);
-      setInventario(inv);
-      setOportunidades(ops);
-      setKpis(k);
-      setDemo(d);
-    } catch {
-      toast.error('Error cargando datos del dashboard');
+      if (s.status === 'fulfilled') setStats(s.value);
+      if (inv.status === 'fulfilled') setInventario(inv.value);
+      if (ops.status === 'fulfilled') setOportunidades(ops.value);
+      if (k.status === 'fulfilled') setKpis(k.value);
+      if (d.status === 'fulfilled') setDemo(d.value);
+      const fallo = [s, inv, ops, k, d].find((r): r is PromiseRejectedResult => r.status === 'rejected');
+      if (fallo) {
+        setError(apiErrorMessage(fallo.reason, 'El servidor no respondió. Puede estar despertando (tarda hasta 1 minuto).'));
+      }
     } finally {
       setLoading(false);
     }
@@ -105,8 +110,9 @@ export default function AdminDashboard() {
   if (loading) {
     return (
       <AdminShell title="Dashboard" subtitle="Panel de administración AutoNegocio" actions={headerActions}>
-        <div className="flex items-center justify-center min-h-[50vh]">
+        <div className="flex flex-col items-center justify-center min-h-[50vh] gap-3">
           <Loader2 className="w-10 h-10 text-primary animate-spin" />
+          <p className="text-gray-500 text-sm">Cargando datos… si el servidor estaba dormido puede tardar hasta 1 minuto.</p>
         </div>
       </AdminShell>
     );
@@ -140,6 +146,12 @@ export default function AdminDashboard() {
 
   return (
     <AdminShell title="Dashboard" subtitle="Panel de administración AutoNegocio" actions={headerActions}>
+      {error && (
+        <div className="card p-4 mb-6 border-red-500/40 flex items-center justify-between gap-3">
+          <p className="text-sm text-red-300 flex items-center gap-2"><AlertCircle className="w-4 h-4 flex-shrink-0" /> {error}</p>
+          <button onClick={loadData} className="btn-primary text-sm px-4 py-2 flex items-center gap-2"><RefreshCw className="w-4 h-4" /> Reintentar</button>
+        </div>
+      )}
         {/* Business KPIs (last 12 months) */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <KPICard
